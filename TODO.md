@@ -1,7 +1,7 @@
 # 🚀 Proyecto GAN: Estimación de Masa y Cuerpo 3D (AMASS/SMPL)
 
 ## 📌 Fase 1: Configuración de Datos y Entorno
-- [ ] **Acceso a Datos:** Descargar y procesar el dataset [AMASS](https://amass.is.tue.mpg.de/).
+- [x] **Acceso a Datos:** Descargar el dataset [AMASS](https://amass.is.tue.mpg.de/).
 - [ ] **Pre-procesamiento:**
     - [ ] Convertir nubes de puntos al formato **MSPN** (6890 puntos).
     - [ ] Normalizar los **10 datos tabulares** (inputs clave para la masa del usuario).
