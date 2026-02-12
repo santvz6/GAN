@@ -32,7 +32,8 @@
 - [ ] **Keywords:** (ej. GAN, SMPL, Point Cloud, Anthropometry).
 
 ### 📖 Cuerpo del Trabajo
-- [ ] **Introducción & Estado del Arte:** - [ ] Revisar [Goodfellow (2014)](https://arxiv.org/pdf/1406.2661) y [CGAN (2014)](https://arxiv.org/pdf/1411.1784).
+- [ ] **Introducción & Estado del Arte:** 
+- [ ] Revisar [Goodfellow (2014)](https://arxiv.org/pdf/1406.2661) y [CGAN (2014)](https://arxiv.org/pdf/1411.1784).
 - [ ] **Motivación y Objetivos:**
     - [ ] **Objetivo Principal:** Desarrollar una red GAN capaz de generar representaciones corporales realistas a partir de datos antropométricos mínimos.
     - [ ] **Objetivo Secundario 1:** Implementar un pipeline de transformación "Tabular a Cuerpo" que mapee el vector generado a la malla SMPL de 6890 puntos.
@@ -45,7 +46,8 @@
     - [ ] Gestión de riesgos y división de tareas.
 
 ### 📊 Análisis y Cierre
-- [ ] **Resultados:** - [ ] Tablas comparativas.
+- [ ] **Resultados:** 
+    - [ ] Tablas comparativas.
     - [ ] Imágenes de las nubes de puntos generadas vs. reales.
 - [ ] **Conclusión:** Evaluación de cumplimiento de objetivos.
 - [ ] **Referencias:** Formatear con Mendeley (exportar a `.bib`).
