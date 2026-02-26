@@ -18,4 +18,4 @@ El sistema se divide en tres bloques principales:
 
 1.  **Generador (MLP):** Recibe parámetros latentes y devuelve el vector de masa/forma (10 puntos clave).
 2.  **Pipeline Tabular-to-Body:** Mapea el vector generado a una malla SMPL de 6890 puntos.
-3.  **Discriminador:** Una
+3.  **Discriminador:** Una dos tres
