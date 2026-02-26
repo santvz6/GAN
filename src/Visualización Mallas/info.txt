@@ -1,0 +1,2 @@
+abrirPKL para visualizar mallas inmutables
+abrirNPZ para modificar las mallas con bethas
