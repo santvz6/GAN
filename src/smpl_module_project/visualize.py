@@ -15,7 +15,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 from measurement_definitions import MeasurementType
-from utils import convex_hull_from_3D_points, filter_body_part_slices
+from config.utils import convex_hull_from_3D_points, filter_body_part_slices
 from joint_definitions import SMPL_IND2JOINT, SMPLX_IND2JOINT
 from landmark_definitions import SMPL_LANDMARK_INDICES, SMPLX_LANDMARK_INDICES
 

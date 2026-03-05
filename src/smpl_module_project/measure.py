@@ -1,18 +1,19 @@
 import os
-import argparse
-import numpy as np
-import trimesh
-import torch
 import smplx
+import trimesh
+import argparse
+
+import torch
+import numpy as np
+
 from typing import List, Dict
 from pprint import pprint
 
 from measurement_definitions import *
-from utils import *
 from visualize import Visualizer
 from landmark_definitions import *
 from joint_definitions import *
-
+from config.utils import *
 
 
 def set_shape(model, shape_coefs):

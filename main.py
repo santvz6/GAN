@@ -1,5 +1,5 @@
 from src.config import Config
-from src.utils import Utils
+from src.config.utils import Utils
 
 
 class Main:
