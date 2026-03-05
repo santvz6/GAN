@@ -3,7 +3,7 @@ venv/
 .venv/
 
 # Specific Paths
-internal/data/smphl/
+internal/data/**
 
 # General Paths
 **/__pycache__/
