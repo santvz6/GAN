@@ -153,9 +153,7 @@ class Measurer():
         distance_cm = distance * 100 # convert to cm
         return distance_cm
     
-    def measure_circumference(self, 
-                              measurement_name: str, 
-                              ):
+    def measure_circumference(self, measurement_name: str):
         '''
         Measure circumferences. Circumferences are defined with 
         landmarks and joints - the measurement is found by cutting the 
@@ -310,15 +308,13 @@ class MeasureSMPL(Measurer):
     All the measurements are expressed in cm.
     '''
 
-    def __init__(self, smpl_path: str = None):
+    def __init__(self, model_root: str = None):
         
         super().__init__()
         print("Initializing SMPL measurer")
         self.model_type = "smpl"
-        self.body_model_root = os.path.join(os.path.abspath(os.path.join(os.getcwd(), '..')), "anthro_smpl", "data")
-        self.body_model_root = "data"
-        self.body_model_path = os.path.join(self.body_model_root, 
-                                            self.model_type)
+        self.body_model_root = model_root
+        self.body_model_path = os.path.join(self.body_model_root, self.model_type)
 
         self.faces = smplx.SMPL(self.body_model_path, ext="pkl").faces
         face_segmentation_path = os.path.join(self.body_model_path,
@@ -336,6 +332,14 @@ class MeasureSMPL(Measurer):
         self.num_joints = SMPL_NUM_JOINTS
 
         self.num_points = 6890
+
+        ######################## ADDED (TODO)
+        faces_path = os.path.join(self.body_model_path, "smpl_faces.npy")
+        if os.path.exists(faces_path):
+            self.faces = np.load(faces_path)
+        else:
+            # Solo si no existe, cargamos el modelo temporalmente (o lo dejamos para later-bind)
+            self.faces = None   
 
     def from_verts(self,
                    verts: torch.tensor, gender:str):
@@ -376,6 +380,8 @@ class MeasureSMPL(Measurer):
         
         self.verts = model_output.vertices.detach().cpu().numpy().squeeze()
         self.joints = model_output.joints.squeeze().detach().cpu().numpy()
+
+        self.faces = model.faces
         self.gender = gender
 
 
@@ -479,7 +485,7 @@ if __name__ == "__main__":
     model_types_to_measure = []
     if args.measure_neutral_smpl_with_mean_shape:
         model_types_to_measure.append("smpl")
-    elif args.measure_neutral_smplx_with_mean_shape:
+    if args.measure_neutral_smplx_with_mean_shape:
         model_types_to_measure.append("smplx")
 
     for model_type in model_types_to_measure:
