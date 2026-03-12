@@ -50,51 +50,87 @@ Entrenamiento de GANs para generar representaciones plausibles del cuerpo humano
 2. **Imagen** — renders de esqueleto 128×128 RGB
 3. **3D** — malla SMPL completa (6890 vértices)
 
-Módulo SMPL del profesor disponible en `smpl_module_project/`.
-
 ---
 
-## Datasets
+## Datasets (estructura real en disco)
 
-| Dataset | Rol | Formato | Descarga |
-|---------|-----|---------|----------|
-| **AMASS** | Tabular (joints) — fuente principal | `.npz` SMPL params | Ya descargado → `internal/data/amass/` |
-| **TN15** | Imagen (RGB de actores en movimiento) | Vídeo RGB + meshes 3D | Registrarse en tnt.uni-hannover.de → TNT15_V1_0.zip → `internal/data/tn15/` |
-| **NOMO3D** | 3D (scans de 400 personas) | OBJ ~57k verts | zenodo.org/records/3735905 → `internal/data/nomo3d/` |
+```
+src/dataset/
+├── AMASS_profesor.zip            (117 MB — copia comprimida del módulo)
+├── TNT15_V1_0.zip                (405 MB — copia comprimida)
+├── TNT15_documentation.pdf       (referencia técnica del dataset)
+├── AMASS/
+│   └── smpl_module_project/      ← MÓDULO DEL PROFESOR (con modelos SMPL)
+│       ├── measure.py, visualize.py, joint_definitions.py, ...
+│       └── data/smpl/
+│           ├── SMPL_FEMALE.pkl   (38 MB)
+│           ├── SMPL_MALE.pkl     (38 MB)
+│           ├── SMPL_NEUTRAL.pkl  (38 MB)
+│           └── *.json
+├── TNT15_V1_0/
+│   ├── Documentation/
+│   │   └── TNT15_documentation.pdf
+│   └── Images/
+│       ├── mr/   ← usada para Image GAN (~24.920 PNGs segmentados)
+│       │   ├── 00/  (PNGs segmentados + MP4)
+│       │   ├── 01/  (PNGs segmentados + MP4)
+│       │   ├── 02/  (PNGs segmentados + MP4)
+│       │   ├── 03/  (PNGs segmentados + MP4)
+│       │   └── 04/  (PNGs segmentados + MP4)
+│       └── pz/   ← también existe (~26.574 PNGs segmentados, no se usa)
+│           ├── 00/  01/  02/  03/  04/
+└── NOMO3D/
+    └── nomo-scans(repetitions-removed)/
+        ├── female/              (177 OBJ — female_0000.obj … female_0176.obj)
+        ├── male/                (179 OBJ — male_0000.obj … male_0178.obj)
+        ├── female_meas_txt/     (177 TXT — medidas antropométricas)
+        └── male_meas_txt/       (179 TXT — medidas antropométricas)
+```
 
-**Regla:** Solo AMASS se usa para datos tabulares (tiene SMPL params directamente). TN15 y NOMO3D no requieren SMPL fitting — se usan como datos de imagen y 3D respectivamente.
+**IMPORTANTE:**
+- Los ficheros `.npz` de AMASS (poses reales) aún **no están** en `src/dataset/AMASS/` — hay que añadirlos ahí.
+- TNT15: imágenes **segmentadas** (siluetas de personas). Existen **dos subcarpetas**: `pz/` (~26.574 PNGs) y `mr/` (~24.920 PNGs), cada una con subdirectorios `00/`–`04/`. Se usa `Images/mr/`.
+- NOMO3D: 356 OBJ únicos (~57k verts c/u) + medidas en .txt. Se submuestrean a 6890 pts con `trimesh`.
+
+| Dataset | Rol | Ubicación real | Estado |
+|---------|-----|----------------|--------|
+| **AMASS** | Tabular — joints via SMPL forward pass | `src/dataset/AMASS/` | Módulo OK — añadir .npz |
+| **TNT15** | Imagen — ~26.581 PNGs segmentados | `src/dataset/TNT15_V1_0/Images/mr/` | Disponible |
+| **NOMO3D** | 3D — 356 OBJ + medidas .txt | `src/dataset/NOMO3D/nomo-scans(repetitions-removed)/` | Disponible |
 
 ---
 
 ## Pipeline General
 
 ```
-AMASS ──► preprocess_joints.py ──► joints.npz (N×72)
-                                        │
-                                   Tabular GAN
-                                        │
-                              generar N cuerpos z~N(0,1)
-                                        │
-                          discriminator_filter.py (score_D > 0.8)
-                                        │
-                             "cuerpos perfectos" aceptados
-                                  ┌─────┴─────┐
-                                  ▼           ▼
-                          smpl_mesh_generator  render_skeleton.py
-                          6890 vértices        imagen 128×128
-                                  │                  │
-                      ┌───────────┘                  └───────────┐
-                      ▼                                          ▼
-           NOMO3D OBJ scans                             TN15 RGB images
-           + meshes generadas                           + renders generados
-                      │                                          │
-                 3D Mesh GAN                               Image GAN
-              (6890 verts)                                (128×128)
+src/dataset/AMASS/ (.npz a añadir)
+        │
+        ▼
+amass_loader.py ──► preprocess_joints.py ──► joints.npz (N×72)
+                                                  │
+                                             Tabular GAN
+                                                  │
+                                        generar N cuerpos z~N(0,1)
+                                                  │
+                                    discriminator_filter.py
+                                    (mantener score_D > 0.8)
+                                                  │
+                                       "cuerpos perfectos"
+                                 ┌────────────────┴────────────────┐
+                                 ▼                                 ▼
+                       smpl_mesh_generator.py              render_skeleton.py
+                       malla 6890 verts                    imagen 128×128 PNG
+                       (SMPL forward pass)                 (Pillow, no opencv)
+                                 │                                 │
+                    src/dataset/NOMO3D/               src/dataset/TNT15_V1_0/
+                    OBJ subsampled a 6890 pts         Images/mr/ (~24.9k PNGs)
+                    + medidas csv/txt                 + renders generados
+                                 │                                 │
+                          3D Mesh GAN                        Image GAN
+                    (NOMO3D + sintético)               (TNT15 + renders)
 ```
 
-**Criterio de aceptación de cuerpos generados:** `score_D > 0.8` (discriminador entrenado puntúa entre 0 y 1 — solo se aceptan los que se parecen más a un cuerpo real).
-
-**Si faltan datos para imagen o 3D:** usar cuerpos generados y filtrados del Tabular GAN para crear los datasets sintéticos de imagen/3D.
+**Criterio de aceptación:** `score_D > 0.8` — el discriminador del Tabular GAN puntúa cada cuerpo generado entre 0 y 1; solo se conservan los que superan 0.8 (los más parecidos a un cuerpo humano real).
 
 ---
 
@@ -108,52 +144,57 @@ GAN/
 ├── main.py                           (punto de entrada)
 ├── windows_environment.yaml          (entorno conda Windows)
 ├── ubuntu_environment.yaml           (entorno conda Ubuntu)
-├── smpl_module_project/              (MODULO DEL PROFESOR - no modificar)
-│   ├── measure.py
-│   ├── measurement_definitions.py
-│   ├── landmark_definitions.py
-│   ├── joint_definitions.py
-│   ├── utils.py
-│   ├── visualize.py
-│   ├── evaluate.py
-│   ├── demo.py
-│   └── data/smpl/
-│       ├── SMPL_FEMALE.pkl
-│       ├── SMPL_MALE.pkl
-│       ├── SMPL_NEUTRAL.pkl
-│       ├── smpl_body_parts_2_faces.json
-│       └── smpl_vert_segmentation.json
 ├── src/
 │   ├── config/
 │   │   ├── paths.py                  (EXISTENTE — paths del proyecto)
 │   │   └── utils.py                  (EXISTENTE — utils SMPL)
-│   ├── data/
-│   │   ├── download_datasets.py      (CREAR — descarga TN15, NOMO3D)
-│   │   ├── amass_loader.py           (CREAR — carga .npz de AMASS)
-│   │   ├── preprocess_joints.py      (CREAR — extrae joints, normaliza)
-│   │   ├── tn15_loader.py            (CREAR — frames RGB de TN15, resize 128×128)
-│   │   ├── nomo3d_loader.py          (CREAR — carga OBJ de NOMO3D con trimesh)
-│   │   ├── render_skeleton.py        (CREAR — joints → imagen 128×128 con Pillow)
-│   │   ├── smpl_mesh_generator.py    (CREAR — joints/betas → malla 6890 verts via smplx)
-│   │   └── discriminator_filter.py   (CREAR — genera N cuerpos, filtra score_D > 0.8)
+│   ├── __init__.py                   (CREAR — hace src un paquete Python)
+│   ├── config/
+│   │   ├── __init__.py               (CREAR)
+│   │   ├── paths.py                  (EXISTENTE — paths del proyecto)
+│   │   └── utils.py                  (EXISTENTE — utils SMPL)
+│   ├── dataset/                      (EXISTENTE — datasets reales)
+│   │   ├── AMASS/
+│   │   │   └── smpl_module_project/  (MÓDULO DEL PROFESOR — no modificar)
+│   │   │       ├── *.py
+│   │   │       └── data/smpl/        (modelos SMPL .pkl)
+│   │   ├── TNT15_V1_0/
+│   │   │   ├── Documentation/
+│   │   │   └── Images/mr/            (~26.581 PNGs en 5 subcarpetas 00-04)
+│   │   └── NOMO3D/
+│   │       └── nomo-scans(repetitions-removed)/
+│   │           ├── female/           (177 OBJ)
+│   │           ├── male/             (179 OBJ)
+│   │           ├── female_meas_txt/  (177 TXT)
+│   │           └── male_meas_txt/    (179 TXT)
+│   ├── data/                         (CREAR)
+│   │   ├── __init__.py               (CREAR)
+│   │   ├── amass_loader.py           (carga .npz de AMASS)
+│   │   ├── preprocess_joints.py      (extrae joints, normaliza → joints.npz)
+│   │   ├── tn15_loader.py            (carga PNGs de Images/mr/, resize 128×128)
+│   │   ├── nomo3d_loader.py          (carga OBJ gender subfolders, subsamplea a 6890 pts)
+│   │   ├── render_skeleton.py        (joints → imagen 128×128 con Pillow)
+│   │   ├── smpl_mesh_generator.py    (joints/betas → malla 6890 verts via smplx)
+│   │   └── discriminator_filter.py   (genera N cuerpos, filtra score_D > 0.8)
 │   ├── models/
+│   │   ├── __init__.py               (CREAR)
 │   │   ├── tabular_gan.py            (CREAR — MLP Generator + Discriminator, WGAN-GP)
 │   │   ├── image_gan.py              (CREAR — DCGAN)
 │   │   └── mesh_gan.py               (CREAR — MLP Gen + PointNet Disc, 6890 verts)
 │   ├── training/
+│   │   ├── __init__.py               (CREAR)
 │   │   ├── train_tabular.py          (CREAR — bucle WGAN-GP tabular)
-│   │   ├── train_image.py            (CREAR — bucle imagen, TN15 + renders)
-│   │   └── train_mesh.py             (CREAR — bucle 3D, NOMO3D + meshes generadas)
+│   │   ├── train_image.py            (CREAR — bucle imagen: TNT15 + renders)
+│   │   └── train_mesh.py             (CREAR — bucle 3D: NOMO3D + sintético)
 │   └── evaluation/
+│       ├── __init__.py               (CREAR)
 │       ├── eval_tabular.py           (CREAR — MMD + bone length error)
 │       ├── eval_image.py             (CREAR — FID con pytorch-fid)
 │       └── eval_3d.py                (CREAR — Chamfer Distance + F-score)
 └── internal/                         (generado por Paths.init_project())
     ├── data/
-    │   ├── amass/                    (ficheros .npz de AMASS)
-    │   ├── tn15/                     (imágenes RGB de TN15)
-    │   ├── nomo3d/                   (scans OBJ de NOMO3D)
     │   ├── joints.npz                (joints normalizados de AMASS)
+    │   ├── generated_joints.npz      (cuerpos filtrados por discriminador)
     │   ├── skeleton_images/          (renders 128×128 generados)
     │   └── meshes/                   (mallas 6890 verts generadas)
     ├── experiments/
@@ -165,7 +206,8 @@ GAN/
 
 ## Reutilización del Módulo del Profesor
 
-**NO modificar** nada dentro de `smpl_module_project/`. Solo importar desde él.
+**Ruta real:** `src/dataset/AMASS/smpl_module_project/`
+**NO modificar** nada dentro de esta carpeta. Solo importar desde ella.
 
 | Módulo | Qué usar | Para qué |
 |--------|----------|----------|
@@ -174,29 +216,31 @@ GAN/
 | `visualize.py` | `Visualizer.create_joint_plot()` | Visualización 3D de resultados |
 | `utils.py` | `convex_hull_from_3D_points()` | Circumferencias si se necesitan |
 | `evaluate.py` | `evaluate_mae()` | MAE entre medidas reales y generadas |
-| `data/smpl/*.pkl` | `SMPL_NEUTRAL.pkl` | Modelo SMPL para preprocessing |
+| `data/smpl/SMPL_NEUTRAL.pkl` | modelo SMPL | Forward pass para joints y meshes |
 
 ```python
-# Ejemplo de importación
+# Importación correcta (ruta actualizada)
 import sys
-sys.path.insert(0, 'smpl_module_project')
+sys.path.insert(0, 'src/dataset/AMASS/smpl_module_project')
 from joint_definitions import SMPL_IND2JOINT, get_joint_regressor
 from landmark_definitions import SMPL_LANDMARK_INDICES
 from visualize import Visualizer
+
+SMPL_MODEL_PATH = 'src/dataset/AMASS/smpl_module_project/data/smpl/SMPL_NEUTRAL.pkl'
 ```
 
 ---
 
 ## Fases de Implementación
 
-### Fase 1 — Descarga y Preprocesado (Persona 1)
+### Fase 1 — Preprocesado de Datos (Persona 1)
 
-**Archivos:** `src/data/download_datasets.py`, `src/data/amass_loader.py`, `src/data/preprocess_joints.py`
+**Archivos:** `src/data/amass_loader.py`, `src/data/preprocess_joints.py`
 
-**Descarga de datasets:**
-- **NOMO3D** (libre): `wget https://zenodo.org/records/3735905/files/NOMO3D.zip` → `internal/data/nomo3d/`
-- **TN15** (requiere registro): tnt.uni-hannover.de → descargar TNT15_V1_0.zip → `internal/data/tn15/`
-- **AMASS**: ya descargado → colocar en `internal/data/amass/`
+**Datasets ya disponibles en disco:**
+- AMASS: colocar ficheros `.npz` en `src/dataset/AMASS/` (el módulo ya está, faltan los .npz)
+- TNT15: ya en `src/dataset/TNT15_V1_0/Images/mr/` (~24.920 PNGs segmentados en 5 subcarpetas)
+- NOMO3D: no disponible — datos 3D serán 100% sintéticos
 
 **Preprocesado AMASS → joints.npz:**
 1. Los ficheros AMASS contienen: `poses` (N, 156), `betas` (10,), `gender`, `mocap_framerate`
@@ -241,11 +285,11 @@ while len(accepted) < N_target:
 
 ---
 
-### Fase 3 — Datos Imagen: TN15 + Renders (Persona 2)
+### Fase 3 — Datos Imagen: TNT15 + Renders (Persona 2)
 
 **Archivos:** `src/data/tn15_loader.py`, `src/data/render_skeleton.py`, `src/models/image_gan.py`, `src/training/train_image.py`
 
-**TN15 loader:** Extraer frames RGB de los vídeos, resize a 128×128, guardar como tensores.
+**TNT15 loader:** Cargar los PNGs segmentados desde `src/dataset/TNT15_V1_0/Images/mr/` (subcarpetas `00/` a `04/`). Son siluetas humanas (~26.581 PNGs totales). Resize a 128×128.
 
 **Render skeleton:** joints filtrados → imagen 128×128 con Pillow (opencv NO instalado)
 - Proyectar joints 3D → 2D (plano XY)
@@ -269,17 +313,37 @@ Discriminator: img(3,128,128)
   → 4× Conv2d(stride=2, BN, LeakyReLU) → Flatten → Linear → 1
 ```
 
-**Dataset imagen = TN15 frames + renders de joints filtrados** (si TN15 insuficiente)
+**Dataset imagen = TNT15 PNGs segmentados (~26.581) + renders de joints filtrados** (render complementa variedad de poses)
 
 ---
 
-### Fase 4 — Datos 3D: NOMO3D + Meshes SMPL (Persona 3)
+### Fase 4 — Datos 3D: NOMO3D + Meshes Sintéticas (Persona 3)
 
 **Archivos:** `src/data/nomo3d_loader.py`, `src/data/smpl_mesh_generator.py`, `src/models/mesh_gan.py`, `src/training/train_mesh.py`
 
-**NOMO3D loader:** Cargar OBJ con `trimesh`, remuestrear superficie a 6890 puntos para aproximar topología SMPL.
+**NOMO3D loader (`nomo3d_loader.py`):**
+- Los OBJ están separados por género:
+  - `female/` → 177 OBJ (`female_0000.obj` … `female_0176.obj`)
+  - `male/` → 179 OBJ (`male_0000.obj` … `male_0178.obj`)
+- Medidas en `female_meas_txt/` y `male_meas_txt/` (usar en eval como ground truth)
+- Cargar con `trimesh.load()`, submuestrear con `trimesh.sample.sample_surface(mesh, 6890)`
+- Submuestrear superficie a 6890 puntos: `trimesh.sample.sample_surface(mesh, 6890)`
+- Los ficheros de medidas (csv/txt) se pueden usar como ground truth en `eval_3d.py`
 
-**SMPL mesh generator:** Cuerpos filtrados (joints+betas) → SMPL forward pass via `smplx` → malla 6890 verts.
+```python
+import trimesh
+mesh = trimesh.load('scan.obj')
+points, _ = trimesh.sample.sample_surface(mesh, 6890)
+# points.shape == (6890, 3)
+```
+
+**SMPL mesh generator (`smpl_mesh_generator.py`):**
+```python
+import smplx
+model = smplx.create(SMPL_MODEL_PATH, model_type='smpl')
+output = model(betas=betas, body_pose=poses)
+vertices = output.vertices  # (1, 6890, 3) — topología SMPL exacta
+```
 
 **Mesh GAN (PointNet-style):**
 ```
@@ -292,7 +356,7 @@ Discriminator (PointNet):
   → MaxPool global → (256,) → Linear(256,128) → Linear(128,1)
 ```
 
-**Dataset 3D = NOMO3D scans + meshes SMPL de joints filtrados** (si NOMO3D insuficiente)
+**Dataset 3D = NOMO3D scans subsampled (~400) + meshes SMPL generadas y filtradas**
 
 ---
 
@@ -396,17 +460,59 @@ python src/evaluation/eval_3d.py       # → Chamfer Distance, F-score
 
 | Persona | Responsabilidad | Entregables |
 |---------|----------------|-------------|
-| **1** | Data Lead + Tabular GAN | `download_datasets.py`, `amass_loader.py`, `preprocess_joints.py`, `tabular_gan.py`, `train_tabular.py`, `discriminator_filter.py`, `eval_tabular.py` |
+| **1** | Data Lead + Tabular GAN | `amass_loader.py`, `preprocess_joints.py`, `tabular_gan.py`, `train_tabular.py`, `discriminator_filter.py`, `eval_tabular.py` |
 | **2** | Image GAN | `tn15_loader.py`, `render_skeleton.py`, `image_gan.py`, `train_image.py`, `eval_image.py` |
 | **3** | 3D Mesh GAN | `nomo3d_loader.py`, `smpl_mesh_generator.py`, `mesh_gan.py`, `train_mesh.py`, `eval_3d.py` |
 | **4** | Integración + Reporte | `main.py` completo, `laTex/main.tex`, `notebooks/proyecto_gan.ipynb`, consolidación de resultados |
 
 ---
 
+## Correcciones Previas a la Implementación
+
+Estas correcciones deben hacerse **antes** de empezar a codificar:
+
+### 1. Crear `__init__.py` vacíos (necesarios para imports Python)
+```bash
+touch src/__init__.py
+touch src/config/__init__.py
+touch src/data/__init__.py
+touch src/models/__init__.py
+touch src/training/__init__.py
+touch src/evaluation/__init__.py
+```
+
+### 2. Corregir `main.py` — import roto
+```python
+# ACTUAL (no funciona — Config no existe):
+from src.config import Config
+
+# CORRECTO:
+from src.config.paths import Paths
+from src.config.utils import Utils
+```
+
+### 3. Añadir ficheros `.npz` de AMASS en `src/dataset/AMASS/`
+- Formato: `poses` (N,156), `betas` (10,), `gender`, `mocap_framerate`
+
+### 4. Instalar pytorch-fid
+```bash
+pip install pytorch-fid
+```
+
+### 5. Notebook
+- `notebooks/n1.ipynb` existe pero está **vacío** (0 bytes)
+- Crear `notebooks/proyecto_gan.ipynb` como notebook principal (ver Regla de Notebook)
+
+---
+
 ## Notas Importantes
 
-- Usar `Paths` de `src/config/paths.py` para todas las rutas (no hardcodear paths)
-- Los modelos SMPL están en `smpl_module_project/data/smpl/` — no mover
-- Si AMASS no está accesible, generar datos sintéticos con distribución gaussiana como fallback
+- Usar `Paths` de `src/config/paths.py` para todas las rutas — no hardcodear paths
+- Los modelos SMPL están en `src/dataset/AMASS/smpl_module_project/data/smpl/` — no mover
+- Los `.npz` de AMASS van en `src/dataset/AMASS/` para que `amass_loader.py` los encuentre
+- TNT15: usar los PNGs de `Images/mr/` (NO `pz/`) directamente — no extraer los MP4
+- NOMO3D: OBJs en subcarpetas `female/` y `male/` dentro de `nomo-scans(repetitions-removed)/`
+- `opencv-python` NO está instalado — usar `Pillow` para renderizar imágenes
+- `smpl_module_project` existe en 3 rutas — usar siempre `src/dataset/AMASS/smpl_module_project/` (la única con los .pkl)
 - Priorizar estabilidad del entrenamiento antes que complejidad arquitectónica
-- Documentar versiones de librerías y resultados en `internal/experiments/`
+- Documentar resultados en `internal/experiments/`
