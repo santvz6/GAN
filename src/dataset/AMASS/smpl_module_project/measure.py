@@ -1,19 +1,19 @@
-import os
-import smplx
-import trimesh
-import argparse
-
-import torch
-import numpy as np
 
 from typing import List, Dict
+import numpy as np
+import trimesh
+import torch
+import smplx
 from pprint import pprint
+import os
+import argparse
 
 from measurement_definitions import *
+from utils import *
 from visualize import Visualizer
 from landmark_definitions import *
 from joint_definitions import *
-from config.utils import *
+
 
 
 def set_shape(model, shape_coefs):
@@ -81,7 +81,9 @@ class Measurer():
     def from_body_model(self):
         pass
 
-    def measure(self, measurement_names: List[str]):
+    def measure(self, 
+                measurement_names: List[str]
+                ):
         '''
         Measure the given measurement names from measurement_names list
         :param measurement_names - list of strings of defined measurements

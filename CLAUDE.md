@@ -500,8 +500,7 @@ pip install pytorch-fid
 ```
 
 ### 5. Notebook
-- `notebooks/n1.ipynb` existe pero está **vacío** (0 bytes)
-- Crear `notebooks/proyecto_gan.ipynb` como notebook principal (ver Regla de Notebook)
+- Notebook principal: `notebooks/proyecto_gan.ipynb` (ver Regla de Notebook)
 
 ---
 
@@ -513,6 +512,6 @@ pip install pytorch-fid
 - TNT15: usar los PNGs de `Images/mr/` (NO `pz/`) directamente — no extraer los MP4
 - NOMO3D: OBJs en subcarpetas `female/` y `male/` dentro de `nomo-scans(repetitions-removed)/`
 - `opencv-python` NO está instalado — usar `Pillow` para renderizar imágenes
-- `smpl_module_project` existe en 3 rutas — usar siempre `src/dataset/AMASS/smpl_module_project/` (la única con los .pkl)
+- `smpl_module_project` está solo en `src/dataset/AMASS/smpl_module_project/` — no modificar (módulo del profesor con los .pkl)
 - Priorizar estabilidad del entrenamiento antes que complejidad arquitectónica
 - Documentar resultados en `internal/experiments/`

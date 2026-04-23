@@ -74,19 +74,16 @@ def generate_and_save_meshes(n_meshes: int = 500, out_dir: str = None):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Intentar cargar cuerpos filtrados
-    gen_joints_path = Paths.GENERATED_JOINTS_NPZ
-    if gen_joints_path.exists():
-        print(f"[SMPL] Cargando cuerpos filtrados desde {gen_joints_path}")
-        data = np.load(str(gen_joints_path))
-        joints = data['joints'][:n_meshes]
-        poses = joints.reshape(-1, 72)
-        betas = np.zeros((len(poses), 10), dtype=np.float32)
-    else:
-        print("[SMPL] No hay cuerpos filtrados. Usando poses aleatorias.")
-        np.random.seed(42)
-        poses = np.random.randn(n_meshes, 72).astype(np.float32) * 0.1
-        betas = np.random.randn(n_meshes, 10).astype(np.float32) * 0.5
+    # Nota: el Tabular GAN genera coordenadas 3D normalizadas de joints,
+    # NO parámetros SMPL axis-angle. Para obtener mallas plausibles usamos
+    # poses aleatorias pequeñas (cuerpo casi neutro) y betas aleatorios.
+    # Esto genera variedad antropométrica vía betas sin violar la semántica
+    # del modelo SMPL. Una alternativa sería entrenar un decoder que mapee
+    # joints 3D → (poses, betas), fuera del alcance de esta práctica.
+    np.random.seed(42)
+    poses = np.random.randn(n_meshes, 72).astype(np.float32) * 0.1
+    betas = np.random.randn(n_meshes, 10).astype(np.float32) * 0.5
+    print(f"[SMPL] Generando {n_meshes} mallas con pose casi-neutra y betas aleatorios.")
 
     print(f"[SMPL] Generando {len(poses)} mallas...")
     vertices = generate_mesh_from_pose(poses, betas)

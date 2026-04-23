@@ -1,35 +1,289 @@
-% ESPECIFICAR LA PLANTILLA QUE USAREMOS
+\documentclass[11pt,a4paper,twocolumn]{article}
 
-\icmltitlerunning{}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{authblk}
+\usepackage[margin=2cm]{geometry}
+
+\title{GANs para la Síntesis Multimodal del Cuerpo Humano:\\
+Coordenadas Articulares, Siluetas e Nubes de Puntos}
+
+\author[1]{Santiago Álvarez Geanta}
+\author[1]{Alejandro García Belmonte}
+\author[1]{Guillermo García Blázquez}
+\author[1]{Taron Sargsyan}
+\affil[1]{Universidad de Alicante, Grado en Ingeniería en Inteligencia Artificial}
+
+\date{}
 
 \begin{document}
 
 \twocolumn[
-\icmltitle{2}
-
-\begin{icmlauthorlist}
-\icmlauthor{Santiago Álvarez Geanta}{ua}
-\icmlauthor{Alejandro García Belmonte}{ua}
-\icmlauthor{Guillermo García Blázquez}{ua}
-\icmlauthor{Taron Sargsyan}{ua}
-\end{icmlauthorlist}
-
-\icmlaffiliation{ua}{Universidad de Alicante, Ingeniería en Inteligencia Artificial}
-
-\icmlcorrespondingauthor{Santiago Álvarez Geanta}{sag82@alu.ua.es}
-\icmlcorrespondingauthor{Alejandro García Belmonte}{}
-\icmlcorrespondingauthor{Guillermo García Blázquez}{}
-\icmlcorrespondingauthor{Taron Sargsyan}{}
-
-\icmlkeywords{}
-
-\vskip 0.3in
+\maketitle
+\begin{abstract}
+Presentamos un pipeline reproducible de tres Redes Generativas Antagónicas
+(GANs) para la síntesis multimodal del cuerpo humano: (i) coordenadas 3D
+articulares (24 joints, 72 dimensiones), (ii) siluetas segmentadas en imagen
+$128\times 128$, y (iii) nubes de puntos 3D de 6890 vértices con topología
+SMPL. Todas las redes se entrenan con la variante Wasserstein-GP para
+estabilidad. El discriminador tabular se reutiliza como filtro de calidad
+(score $>0.8$), acoplando las tres modalidades en un único pipeline. Evaluamos
+con MMD y error de longitud ósea (tabular), FID (imagen), y Chamfer Distance
+y F-Score@$\tau$ (3D). Los datasets empleados son AMASS (tabular), TNT15
+(imagen) y NOMO3D (3D).
+\end{abstract}
+\vspace{0.5cm}
 ]
 
+\section{Introducción}
 
-\begin{abstract}
-\end{abstract}
+Las Redes Generativas Antagónicas (GANs) \cite{goodfellow2014} permiten aprender
+distribuciones de datos complejas mediante un juego de suma cero entre un
+generador $G$ y un discriminador $D$. En los últimos años han dado resultados
+notables en imagen, audio y datos 3D.
 
+El cuerpo humano es un dominio especialmente interesante: sus representaciones
+abarcan desde parámetros articulares de baja dimensión hasta mallas 3D
+completas, pasando por imágenes 2D. Este trabajo aborda las tres modalidades
+en un mismo marco, usando el modelo paramétrico SMPL \cite{loper2015smpl}
+como puente entre ellas.
 
+\subsection{Objetivos}
+
+\textbf{Objetivo principal.} Desarrollar un pipeline de GANs capaz de generar
+representaciones corporales plausibles en tres modalidades (tabular, imagen,
+3D) con entrenamiento estable y evaluación cuantitativa.
+
+\textbf{Objetivos secundarios:}
+\begin{itemize}
+  \item Implementar WGAN-GP \cite{gulrajani2017wgangp} para las tres
+    arquitecturas y comparar su estabilidad frente a la GAN vanilla.
+  \item Usar el discriminador del modelo tabular como filtro de calidad para
+    alimentar las fases posteriores (imagen, 3D).
+  \item Evaluar con métricas estándar (MMD, FID, Chamfer, F-Score) y
+    visualizar los resultados.
+\end{itemize}
+
+\section{Estado del Arte}
+
+\paragraph{GANs clásicas.} Goodfellow et al.~\cite{goodfellow2014}
+introdujeron la formulación minimax:
+\[
+\min_G \max_D \mathbb{E}_{x\sim p_{\text{data}}}[\log D(x)]
++ \mathbb{E}_{z\sim p_z}[\log(1-D(G(z)))].
+\]
+Su inestabilidad motivó numerosas variantes.
+
+\paragraph{Wasserstein GAN.} Arjovsky et al.~\cite{arjovsky2017wgan}
+reemplazan la divergencia Jensen-Shannon por la distancia de
+Wasserstein-1, y Gulrajani et al.~\cite{gulrajani2017wgangp} introducen
+la penalización de gradiente que empleamos en este trabajo.
+
+\paragraph{DCGAN.} Radford et al.~\cite{radford2015dcgan} establecen
+convenciones para GANs convolucionales (sin max-pool, con batch-norm,
+activación Tanh final).
+
+\paragraph{PointNet.} Qi et al.~\cite{qi2017pointnet} proponen una
+arquitectura invariante al orden para datos no estructurados, que usamos
+como discriminador en la modalidad 3D.
+
+\paragraph{SMPL y AMASS.} Loper et al.~\cite{loper2015smpl} presentan
+SMPL, un modelo paramétrico del cuerpo humano que asocia parámetros de
+pose y forma con mallas 3D de 6890 vértices. AMASS \cite{AMASS} unifica
+múltiples datasets de \textit{motion capture} bajo SMPL.
+
+\section{Datos}
+
+\subsection{AMASS}
+Extraemos los $72$ primeros coeficientes de \texttt{poses} (24 joints
+$\times$ 3 axis-angle) junto con los 10 \texttt{betas}. Aplicamos un
+\textit{forward pass} de SMPL con la biblioteca \texttt{smplx} para
+obtener las coordenadas 3D de los 24 joints.
+
+\subsection{TNT15}
+Utilizamos $\sim 25$k PNGs segmentados de la carpeta
+\texttt{Images/mr/}, redimensionados a $128\times 128$ y convertidos a
+RGB. Cada imagen es una silueta blanca sobre fondo negro.
+
+\subsection{NOMO3D}
+$356$ escaneos OBJ (177 femeninos + 179 masculinos) con $\sim 57$k
+vértices cada uno. Submuestreamos cada superficie a exactamente $6890$
+puntos mediante \texttt{trimesh.sample.sample\_surface}, para coincidir
+con la topología SMPL.
+
+\section{Preprocesado}
+
+\subsection{Normalización tabular}
+Cada vector de joints $\mathbf{J}\in\mathbb{R}^{24\times 3}$ se
+normaliza:
+\begin{align}
+\mathbf{J}' &= \mathbf{J} - \mathbf{J}_0 \quad\text{(pelvis al origen)}\\
+h &= \|\mathbf{J}'_{15} - \mathbf{J}'_0\|_2 \\
+\hat{\mathbf{J}} &= \mathbf{J}' / h
+\end{align}
+y se aplana a un vector de $72$ dimensiones en $[-1,1]$ aprox.
+
+\subsection{Normalización 3D}
+Las nubes de NOMO3D se centran en su centroide y se escalan a la caja
+unitaria $[-1,1]^3$ por el máximo absoluto.
+
+\section{Arquitecturas}
+
+\subsection{Tabular GAN (MLP, WGAN-GP)}
+
+\paragraph{Generador $G_T$:}
+$z\in\mathbb{R}^{128} \to 256 \to 512 \to 1024 \to 72$, con BatchNorm
+y LeakyReLU(0.2), salida Tanh.
+
+\paragraph{Discriminador $D_T$:}
+$72 \to 512 \to 256 \to 128 \to 1$, con LeakyReLU y Dropout(0.3).
+Sin activación final.
+
+\subsection{Image GAN (DCGAN, WGAN-GP)}
+
+\paragraph{Generador $G_I$:}
+$z\in\mathbb{R}^{128} \to FC \to 4\times 4\times 512$, seguido de
+5 capas ConvTranspose2d (kernel 4, stride 2) con BN + ReLU, hasta
+$128\times 128\times 3$. Tanh final.
+
+\paragraph{Discriminador $D_I$:}
+Simétrico al generador: 5 capas Conv2d (kernel 4, stride 2) con
+LeakyReLU(0.2) y BN (excepto la primera), terminando en un escalar.
+
+\subsection{Mesh GAN (PointNet disc., WGAN-GP)}
+
+\paragraph{Generador $G_M$:}
+$z\in\mathbb{R}^{128} \to 1024 \to 4096 \to 8192 \to 6890\cdot 3$,
+con BN + ReLU y reshape final a $(6890,3)$.
+
+\paragraph{Discriminador $D_M$ (PointNet):}
+MLP compartido por punto $3\to 64\to 128\to 256\to 512$, seguido de
+\textit{max-pool} global y MLP final $512\to 256\to 128\to 1$.
+
+\subsection{Pérdida WGAN-GP}
+Para las tres redes usamos:
+\begin{align}
+\mathcal{L}_D &= \mathbb{E}[D(\tilde{x})] - \mathbb{E}[D(x)] + \lambda\,\mathbb{E}\left[\left(\|\nabla_{\hat{x}} D(\hat{x})\|_2 - 1\right)^2\right]\\
+\mathcal{L}_G &= -\mathbb{E}[D(G(z))]
+\end{align}
+donde $\hat{x} = \alpha x + (1-\alpha)\tilde{x}$ con $\alpha\sim\mathcal{U}[0,1]$, y $\lambda=10$.
+
+\section{Entrenamiento}
+
+Todas las redes comparten hiperparámetros:
+\begin{itemize}
+  \item Optimizador Adam, $\beta_1=0.0$, $\beta_2=0.9$, $\text{lr}=10^{-4}$.
+  \item $n_\text{critic}=5$ pasos de $D$ por cada paso de $G$.
+  \item $200$ épocas, semillas fijas ($42$).
+  \item Checkpoints cada 50 épocas.
+\end{itemize}
+El batch size es $64$ para tabular e imagen, y $16$ para 3D (por consumo de memoria).
+
+\section{Filtrado con el Discriminador}
+
+Una vez entrenado el Tabular GAN, usamos $D_T$ como filtro de calidad:
+\begin{enumerate}
+  \item Generar un lote $\mathbf{z}\sim\mathcal{N}(0,I)$ y $\tilde{\mathbf{J}} = G_T(\mathbf{z})$.
+  \item Calcular $s = \sigma(D_T(\tilde{\mathbf{J}}))$ con $\sigma$ sigmoide.
+  \item Conservar los $\tilde{\mathbf{J}}$ con $s > 0.8$.
+\end{enumerate}
+Estos \textit{cuerpos perfectos} alimentan la generación de renders de
+esqueleto (para Image GAN) y de mallas SMPL sintéticas (para Mesh GAN).
+
+\section{Evaluación}
+
+\subsection{Tabular: MMD y Error Óseo}
+El MMD con kernel RBF:
+\[
+\text{MMD}^2(P,Q) = \mathbb{E}[k(x,x')] - 2\mathbb{E}[k(x,y)] + \mathbb{E}[k(y,y')]
+\]
+y el error absoluto medio de las longitudes de los huesos del esqueleto SMPL.
+
+\subsection{Imagen: FID}
+Fréchet Inception Distance usando \texttt{pytorch-fid} con $n=2048$
+muestras generadas contra las imágenes reales de TNT15.
+
+\subsection{3D: Chamfer Distance y F-Score}
+Chamfer Distance bidireccional y F-Score con tolerancia $\tau=0.01$
+(1 cm, dado que las mallas están normalizadas a la caja unitaria).
+
+\section{Resultados}
+
+\textit{(Esta sección se rellena tras ejecutar los entrenamientos. Se
+esperan tablas con MMD, FID, CD y F-Score junto con rejillas visuales de
+muestras generadas por cada modalidad.)}
+
+\begin{table}[h]
+\centering
+\caption{Resultados cuantitativos esperados (plantilla).}
+\begin{tabular}{lc}
+\toprule
+Métrica & Valor \\
+\midrule
+MMD tabular (RBF, $\sigma=1$) & --- \\
+Bone length MAE & --- \\
+FID imagen & --- \\
+Chamfer Distance 3D & --- \\
+F-Score@0.01 3D & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Conclusiones}
+
+Hemos construido un pipeline modular que integra tres GANs complementarias
+sobre el mismo dominio del cuerpo humano. El uso de WGAN-GP en las tres
+arquitecturas y el filtrado con discriminador permiten un flujo reproducible
+y controlable. Como trabajo futuro destacan: (i) entrenar un decoder
+auxiliar que mapee los $72$ números del Tabular GAN a parámetros SMPL
+válidos para generar mallas coherentes con las poses; (ii) condicionar los
+generadores con datos antropométricos (altura, peso) para tareas de
+estimación corporal; (iii) extender a secuencias temporales.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+
+\bibitem{goodfellow2014}
+I.~Goodfellow et~al.
+\newblock Generative Adversarial Nets.
+\newblock \emph{NIPS}, 2014.
+
+\bibitem{arjovsky2017wgan}
+M.~Arjovsky, S.~Chintala, L.~Bottou.
+\newblock Wasserstein GAN.
+\newblock \emph{ICML}, 2017.
+
+\bibitem{gulrajani2017wgangp}
+I.~Gulrajani et~al.
+\newblock Improved Training of Wasserstein GANs.
+\newblock \emph{NIPS}, 2017.
+
+\bibitem{radford2015dcgan}
+A.~Radford, L.~Metz, S.~Chintala.
+\newblock Unsupervised Representation Learning with DCGANs.
+\newblock \emph{ICLR}, 2016.
+
+\bibitem{qi2017pointnet}
+C.~R.~Qi et~al.
+\newblock PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation.
+\newblock \emph{CVPR}, 2017.
+
+\bibitem{loper2015smpl}
+M.~Loper et~al.
+\newblock SMPL: A Skinned Multi-Person Linear Model.
+\newblock \emph{ACM Trans. Graphics}, 2015.
+
+\bibitem{AMASS}
+N.~Mahmood et~al.
+\newblock AMASS: Archive of Motion Capture as Surface Shapes.
+\newblock \emph{ICCV}, 2019.
+
+\end{thebibliography}
 
 \end{document}

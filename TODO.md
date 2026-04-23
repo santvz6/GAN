@@ -1,53 +1,56 @@
-# 🚀 Proyecto GAN: Estimación de Masa y Cuerpo 3D (AMASS/SMPL)
+# Proyecto GAN: Estado del Proyecto
 
-## 📌 Fase 1: Configuración de Datos y Entorno
-- [x] **Acceso a Datos:** Descargar el dataset [AMASS](https://amass.is.tue.mpg.de/).
-- [ ] **Pre-procesamiento:**
-    - [ ] Convertir nubes de puntos al formato **MSPN** (6890 puntos).
-    - [ ] Normalizar los **10 datos tabulares** (inputs clave para la masa del usuario).
-- [ ] **Integración SMPL/SMPL-X:** Configurar el pipeline para transformar los parámetros tabulares en mallas 3D.
+## Fase 1 — Configuración y Datos
+- [x] Estructura de proyecto (`src/config/paths.py`, `__init__.py`)
+- [x] Loader AMASS (`src/data/amass_loader.py`)
+- [x] Preprocesado joints (`src/data/preprocess_joints.py`)
+- [x] Loader TNT15 (`src/data/tn15_loader.py`)
+- [x] Loader NOMO3D (`src/data/nomo3d_loader.py`)
+- [x] Render esqueleto con Pillow (`src/data/render_skeleton.py`)
+- [x] Generador mallas SMPL (`src/data/smpl_mesh_generator.py`)
+- [ ] **Descargar `.npz` de AMASS** y colocar en `src/dataset/AMASS/` — pendiente del usuario.
 
-## 🏗️ Fase 2: Arquitectura del Modelo (GAN)
-- [ ] **Generador:**
-    - [ ] Diseñar MLP (Multi-Layer Perceptron) para procesar datos tabulares.
-    - [ ] Objetivo: Generar el vector de 10 puntos que represente la masa/forma real.
-- [ ] **Discriminador:**
-    - [ ] Implementar arquitectura para distinguir entre datos reales (AMASS) y generados.
-    - [ ] *Nota:* Evaluar si el discriminador procesa el vector tabular o la reconstrucción 3D.
-- [ ] **Codificadores (Opcional según arquitectura):**
-    - [ ] CNN para procesamiento de imágenes (si se usa info visual).
-    - [ ] MLP para datos tabulares.
-    - [ ] PointNet/CNN 3D si se procesa la nube de puntos directamente.
+## Fase 2 — Modelos GAN (WGAN-GP)
+- [x] Tabular GAN (`src/models/tabular_gan.py`) — MLP + gradient penalty
+- [x] Image GAN (`src/models/image_gan.py`) — DCGAN
+- [x] Mesh GAN (`src/models/mesh_gan.py`) — MLP + PointNet discriminator
 
-## 🧪 Fase 3: Experimentación
-- [ ] Definir **Hiperparámetros** (Learning rate, batch size, épocas).
-- [ ] Entrenamiento del bucle GAN (Loss de Minimax).
-- [ ] Realizar pruebas de "Test de Turing" del modelo para validar realismo.
-- [ ] **Métricas:** Definir KPIs cuantitativos (Error medio en puntos, precisión en masa).
+## Fase 3 — Entrenamiento
+- [x] `src/training/train_tabular.py`
+- [x] `src/training/train_image.py`
+- [x] `src/training/train_mesh.py`
+- [x] Filtrado por discriminador (`src/data/discriminator_filter.py`)
+- [ ] **Lanzar entrenamientos** — pendiente de GPU del usuario (~horas cada uno)
 
-## 📝 Fase 4: Redacción de la Memoria (LaTeX)
-### 📘 Preliminares
-- [ ] Título y Nombres de autores.
-- [ ] **Abstract:** Resumen ejecutivo del proyecto.
-- [ ] **Keywords:** (ej. GAN, SMPL, Point Cloud, Anthropometry).
+## Fase 4 — Evaluación
+- [x] MMD + Bone Length (`src/evaluation/eval_tabular.py`)
+- [x] FID (`src/evaluation/eval_image.py`)
+- [x] Chamfer + F-Score (`src/evaluation/eval_3d.py`)
+- [ ] **Instalar `pytorch-fid`** (`pip install pytorch-fid`) si aún no está
+- [ ] Ejecutar `python main.py --eval` tras los entrenamientos
 
-### 📖 Cuerpo del Trabajo
-- [ ] **Introducción & Estado del Arte:** 
-- [ ] Revisar [Goodfellow (2014)](https://arxiv.org/pdf/1406.2661) y [CGAN (2014)](https://arxiv.org/pdf/1411.1784).
-- [ ] **Motivación y Objetivos:**
-    - [ ] **Objetivo Principal:** Desarrollar una red GAN capaz de generar representaciones corporales realistas a partir de datos antropométricos mínimos.
-    - [ ] **Objetivo Secundario 1:** Implementar un pipeline de transformación "Tabular a Cuerpo" que mapee el vector generado a la malla SMPL de 6890 puntos.
-    - [ ] **Objetivo Secundario 2:** Evaluar la precisión del modelo en la reconstrucción de la masa del usuario utilizando solo 10 parámetros.
-    - [ ] **Objetivo Secundario 3:** Comparar el rendimiento de distintas arquitecturas (MLP vs CNN) para el procesamiento de información condicional.
-- [ ] **Metodología:**
-    - [ ] Búsqueda en bases de datos (PubMed, Arxiv, IEEE).
-    - [ ] **Pseudocódigo** del entrenamiento.
-    - [ ] Diagramas de arquitectura (sin código fuente).
-    - [ ] Gestión de riesgos y división de tareas.
+## Fase 5 — Integración y Documentación
+- [x] `main.py` orquestador con flags por fase
+- [x] Notebook principal (`notebooks/proyecto_gan.ipynb`)
+- [x] LaTeX inicial con secciones (`laTex/main.tex`)
+- [ ] Completar sección Resultados del LaTeX con números reales tras evaluación
 
-### 📊 Análisis y Cierre
-- [ ] **Resultados:** 
-    - [ ] Tablas comparativas.
-    - [ ] Imágenes de las nubes de puntos generadas vs. reales.
-- [ ] **Conclusión:** Evaluación de cumplimiento de objetivos.
-- [ ] **Referencias:** Formatear con Mendeley (exportar a `.bib`).
+## Comandos
+
+```bash
+# Pipeline completo (tras haber puesto los .npz de AMASS)
+python main.py --all
+
+# Paso a paso
+python main.py --preprocess
+python main.py --train-tabular
+python main.py --filter --n 1000
+python main.py --gen-meshes --n 500
+python main.py --render --n 500
+python main.py --train-image
+python main.py --train-mesh
+python main.py --eval
+```
+
+## Git workflow
+- Todos los cambios van a la rama `dev_taron`, nunca a `main`.

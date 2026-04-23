@@ -1,9 +1,55 @@
-# Own Data
+# ───────────── Entornos virtuales ─────────────
 venv/
 .venv/
+env/
 
-# Specific Paths
-internal/data/**
-
-# General Paths
+# ───────────── Caches Python / Jupyter ─────────────
 **/__pycache__/
+*.py[cod]
+*.so
+.ipynb_checkpoints/
+
+# ───────────── Datos generados por el proyecto ─────────────
+internal/
+
+# ───────────── Datasets fuente (pesados, no subir) ─────────────
+# Modelos SMPL (.pkl ~117 MB) y JSONs auxiliares
+src/dataset/AMASS/smpl_module_project/data/
+# Ficheros AMASS originales
+src/dataset/AMASS/*.npz
+# TNT15 (~405 MB de imágenes segmentadas)
+src/dataset/TNT15_V1_0/
+# NOMO3D (OBJ + medidas)
+src/dataset/NOMO3D/
+# Zips del profesor
+src/dataset/*.zip
+src/dataset/*.pdf
+
+# ───────────── Checkpoints y modelos entrenados ─────────────
+*.pt
+*.pth
+*.ckpt
+*.h5
+
+# ───────────── LaTeX build artifacts ─────────────
+laTex/*.aux
+laTex/*.log
+laTex/*.out
+laTex/*.toc
+laTex/*.bbl
+laTex/*.blg
+laTex/*.synctex.gz
+laTex/*.fls
+laTex/*.fdb_latexmk
+laTex/*.pdf
+
+# ───────────── Variables de entorno / secretos ─────────────
+.env
+.env.local
+
+# ───────────── OS / IDE ─────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.claude/

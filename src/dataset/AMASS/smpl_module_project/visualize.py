@@ -1,21 +1,21 @@
-import json
-import torch
+
 import numpy as np
-
-import trimesh
-import argparse
-import smplx
-#import ipywidgets as widgets
-
 from typing import List
-
 import plotly
 import plotly.graph_objects as go
 import plotly.express as px
+import trimesh
+import argparse
+import smplx
+import json
+import torch
+#import ipywidgets as widgets
 from plotly.subplots import make_subplots
 
+
+
 from measurement_definitions import MeasurementType
-from config.utils import convex_hull_from_3D_points, filter_body_part_slices
+from utils import convex_hull_from_3D_points, filter_body_part_slices
 from joint_definitions import SMPL_IND2JOINT, SMPLX_IND2JOINT
 from landmark_definitions import SMPL_LANDMARK_INDICES, SMPLX_LANDMARK_INDICES
 
