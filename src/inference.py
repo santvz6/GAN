@@ -51,7 +51,7 @@ def infer(args):
     print(f"Generated betas: {fake_betas.numpy()}")
     
     # Render with SMPL
-    measurer = MeasureBody("smpl")
+    measurer = MeasureBody("smpl", model_root=str(Paths.DATA_DIR))
     measurer.from_body_model(gender=args.gender.upper(), shape=fake_betas)
     
     # Show mesh

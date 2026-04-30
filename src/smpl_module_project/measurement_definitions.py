@@ -1,6 +1,6 @@
 
-from landmark_definitions import *
-from joint_definitions import *
+from .landmark_definitions import *
+from .joint_definitions import *
 
 STANDARD_LABELS = {
         'A': 'head circumference',

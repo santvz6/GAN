@@ -6,9 +6,9 @@ import torch
 import numpy as np
 import pandas as pd
 
-from measure import MeasureBody
-from measurement_definitions import STANDARD_LABELS
-from evaluate import evaluate_mae
+from .measure import MeasureBody
+from .measurement_definitions import STANDARD_LABELS
+from .evaluate import evaluate_mae
 
 from dotenv import load_dotenv
 load_dotenv()

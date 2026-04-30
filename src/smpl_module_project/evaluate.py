@@ -30,8 +30,8 @@ def evaluate_mae(gt_measurements, estim_measurements):
 if __name__ == "__main__":
     import torch
     import pandas as pd
-    from measure import MeasureSMPL
-    from measurement_definitions import SMPLMeasurementDefinitions
+    from .measure import MeasureSMPL
+    from .measurement_definitions import SMPLMeasurementDefinitions
     from src.config.paths import Paths
 
     smpl_path = Paths.SMPL_DIR

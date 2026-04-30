@@ -9,11 +9,11 @@ import numpy as np
 from typing import List, Dict
 from pprint import pprint
 
-from measurement_definitions import *
-from visualize import Visualizer
-from landmark_definitions import *
-from joint_definitions import *
-from config.utils import *
+from .measurement_definitions import *
+from .visualize import Visualizer
+from .landmark_definitions import *
+from .joint_definitions import *
+from ..config.utils import *
 
 
 def set_shape(model, shape_coefs):
@@ -313,6 +313,11 @@ class MeasureSMPL(Measurer):
         super().__init__()
         print("Initializing SMPL measurer")
         self.model_type = "smpl"
+        
+        if model_root is None:
+            # Default to internal/data if not provided
+            model_root = os.path.join(os.getcwd(), "internal", "data")
+            
         self.body_model_root = model_root
         self.body_model_path = os.path.join(self.body_model_root, self.model_type)
 
@@ -337,9 +342,6 @@ class MeasureSMPL(Measurer):
         faces_path = os.path.join(self.body_model_path, "smpl_faces.npy")
         if os.path.exists(faces_path):
             self.faces = np.load(faces_path)
-        else:
-            # Solo si no existe, cargamos el modelo temporalmente (o lo dejamos para later-bind)
-            self.faces = None   
 
     def from_verts(self,
                    verts: torch.tensor, gender:str):
@@ -393,12 +395,17 @@ class MeasureSMPLX(Measurer):
     All the measurements are expressed in cm.
     '''
 
-    def __init__(self):
+    def __init__(self, model_root: str = None):
         
         super().__init__()
-
+        print("Initializing SMPLX measurer")
         self.model_type = "smplx"
-        self.body_model_root = "data"
+        
+        if model_root is None:
+            # Default to internal/data if not provided
+            model_root = os.path.join(os.getcwd(), "internal", "data")
+
+        self.body_model_root = model_root
         self.body_model_path = os.path.join(self.body_model_root, 
                                             self.model_type)
 
@@ -462,12 +469,12 @@ class MeasureSMPLX(Measurer):
 
 
 class MeasureBody():
-    def __new__(cls, model_type):
+    def __new__(cls, model_type, model_root=None):
         model_type = model_type.lower()
         if model_type == 'smpl':
-            return MeasureSMPL()
+            return MeasureSMPL(model_root=model_root)
         elif model_type == 'smplx':
-            return MeasureSMPLX()
+            return MeasureSMPLX(model_root=model_root)
         else:
             raise NotImplementedError("Model type not defined")
 

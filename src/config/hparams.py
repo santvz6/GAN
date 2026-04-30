@@ -6,7 +6,7 @@ class HParams:
     # Generator
     noise_dim: int = 64
     cond_dim: int = 10  # 10 measurements
-    g_hidden_dims: List[int] = field(default_factory=lambda: [256, 512, 256])
+    g_hidden_dims: List[int] = field(default_factory=lambda: [256, 512, 1024, 512, 256])
     
     # Discriminator
     d_hidden_dims: List[int] = field(default_factory=lambda: [256, 128, 64])
@@ -15,7 +15,7 @@ class HParams:
     num_betas: int = 10
     
     # Training
-    batch_size: int = 32
+    batch_size: int = 128
     epochs: int = 2000
     lr_g: float = 1e-4
     lr_d: float = 1e-4
@@ -25,6 +25,11 @@ class HParams:
     # WGAN-GP
     n_critic: int = 5
     lambda_gp: float = 10.0
+    
+    # Logging / checkpointing
+    checkpoint_interval: int = 500   # save weights every N epochs
+    sample_interval:     int = 100   # log sample betas every N epochs
+    num_workers:         int = 4     # DataLoader parallel workers
     
     # Dataset
     train_split: float = 0.8

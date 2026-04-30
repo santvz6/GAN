@@ -43,7 +43,7 @@ class NOMODataset(Dataset):
                         if len(parts) >= 2:
                             # e.g. "MEASURE Seat_Back_Angle=18.7"
                             key_val = parts[1].split('=')
-                            if len(key_val) == 2:
+                            if len(key_val) == 2 and key_val[1]:
                                 meas_dict[key_val[0]] = float(key_val[1])
             
             # Extract 10 inputs

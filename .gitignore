@@ -1,9 +1,57 @@
-# Own Data
+# ==========================================
+# Entornos Virtuales
+# ==========================================
 venv/
 .venv/
+env/
+.env/
 
-# Specific Paths
-internal/data/**
+# ==========================================
+# Caché y Compilados de Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
 
-# General Paths
-**/__pycache__/
+# ==========================================
+# Deep Learning, PyTorch y Modelos
+# ==========================================
+*.pt
+*.pth
+*.ckpt
+*.weights
+*.h5
+*.onnx
+*.pkl
+*.npz
+checkpoints/
+models/
+weights/
+
+# ==========================================
+# Datos y Logs (TensorBoard, W&B, etc.)
+# ==========================================
+*.log
+
+# ==========================================
+# Jupyter Notebooks
+# ==========================================
+internal/
+.ipynb_checkpoints/
+
+# ==========================================
+# IDEs y Editores (VS Code, PyCharm, etc.)
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# Sistema Operativo
+# ==========================================
+.DS_Store
+Thumbs.db
+*~
