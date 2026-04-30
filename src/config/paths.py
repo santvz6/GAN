@@ -16,7 +16,15 @@ class Paths:
     LOGS_DIR = INTERNAL / "logs"
     TEMP_DIR = INTERNAL / "temp"
 
+    NOMO3D_DIR = DATA_DIR / "nomo3d" 
     SMPL_DIR = DATA_DIR / "smpl"
+    TNT15_DIR = DATA_DIR / "tnt15"
+    
+    NOMO3D_FEMALE_MEAS = NOMO3D_DIR / "female_meas_txt"
+    NOMO3D_MALE_MEAS = NOMO3D_DIR / "male_meas_txt"
+    NOMO3D_FEMALE_OBJ = NOMO3D_DIR / "female"
+    NOMO3D_MALE_OBJ = NOMO3D_DIR / "male"
+    TNT15_MODELS = TNT15_DIR / "InputFiles" / "Models_31par"
 
 
     @classmethod
