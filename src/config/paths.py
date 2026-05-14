@@ -90,18 +90,18 @@ class Paths:
     # ------------------------------------------------------------------ #
     @classmethod
     def _import_raw_datasets(cls):
-        # Small: SMPL .pkl + .json segmentation files (~115 MB total, copy is fine)
+        # SMPL .pkl + .json segmentation files (~115 MB total, copy is fine and required by smplx)
         cls._copy_dir_contents(cls._RAW_SMPL_SRC, cls.SMPL_DIR)
 
-        # Small: NOMO3D measurement .txt files (~few MB)
-        cls._copy_dir_recursive(cls._RAW_NOMO3D_FEMALE_MEAS, cls.NOMO3D_FEMALE_MEAS)
-        cls._copy_dir_recursive(cls._RAW_NOMO3D_MALE_MEAS,   cls.NOMO3D_MALE_MEAS)
+        # NOMO3D measurement .txt files — link or fall back (Drive may have synced empty dirs)
+        cls.NOMO3D_FEMALE_MEAS = cls._link_or_fallback(cls._RAW_NOMO3D_FEMALE_MEAS, cls.NOMO3D_FEMALE_MEAS)
+        cls.NOMO3D_MALE_MEAS   = cls._link_or_fallback(cls._RAW_NOMO3D_MALE_MEAS,   cls.NOMO3D_MALE_MEAS)
 
-        # Big: NOMO3D OBJ scans (~hundreds of MB) — link or fall back
+        # NOMO3D OBJ scans (~hundreds of MB) — link or fall back
         cls.NOMO3D_FEMALE_OBJ = cls._link_or_fallback(cls._RAW_NOMO3D_FEMALE_OBJ, cls.NOMO3D_FEMALE_OBJ)
         cls.NOMO3D_MALE_OBJ   = cls._link_or_fallback(cls._RAW_NOMO3D_MALE_OBJ,   cls.NOMO3D_MALE_OBJ)
 
-        # Big: TNT15 silhouettes (~1 GB) — link or fall back
+        # TNT15 silhouettes (~1 GB) — link or fall back
         cls.TNT15_IMAGES_DIR = cls._link_or_fallback(cls._RAW_TNT15_IMAGES, cls.TNT15_IMAGES_DIR)
 
     # ------------------------------------------------------------------ #
