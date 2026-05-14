@@ -1,3 +1,10 @@
+# Utility
+numpy==2.4.4
+tqdm==4.67.3
+pandas==3.0.2
+seaborn==0.13.2
+plotly==6.7.0
+
 # AI
 # torch==2.5.1+cu121
 # torchvision==0.20.1+cu121
@@ -8,12 +15,6 @@ torch
 
 
 scipy==1.17.1
-
-# Utility
-tqdm==4.67.3
-pandas==3.0.2
-seaborn==0.13.2
-plotly==6.7.0
 
 # Mesh
 trimesh==4.12.1
