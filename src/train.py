@@ -41,19 +41,40 @@ class WGANGPTrainer:
             batch_size=self.hp.batch_size,
             shuffle=True,
             drop_last=True,
-            num_workers=self.hp.num_workers,   # parallel CPU workers -> no GPU stall
-            pin_memory=True,                   # page-locked mem -> faster H2D transfer
-            persistent_workers=self.hp.num_workers > 0,  # keep workers alive between epochs
+            num_workers=self.hp.num_workers,
+            pin_memory=True,
+            persistent_workers=self.hp.num_workers > 0,
         )
+
+        # --- Compute and save measurement normalisation stats ---
+        self.meas_mean, self.meas_std = self._compute_scaler(train_ds)
+        np.savez(
+            str(Paths.SCALER_PATH),
+            mean=self.meas_mean.numpy(),
+            std=self.meas_std.numpy(),
+        )
+        print(f"  [SCALER] Saved -> {Paths.SCALER_PATH}")
 
         # --- Sample log CSV ---
         self.sample_log_path = Paths.LOGS_DIR / "beta_samples.csv"
         self._init_sample_log()
 
-        # --- Fixed probe tensor (reused every sample_interval) ---
-        self._probe = torch.tensor(
-            [PROBE_MEAS], dtype=torch.float32
-        ).to(self.device)
+        # --- Fixed probe tensor (normalised, reused every sample_interval) ---
+        probe_raw = torch.tensor([PROBE_MEAS], dtype=torch.float32)
+        self._probe = self._normalise(probe_raw).to(self.device)
+
+    # ------------------------------------------------------------------
+    def _compute_scaler(self, dataset: NOMODataset):
+        """Compute mean and std of all measurements across the training split."""
+        all_meas = torch.stack([dataset.samples[i]['measurements']
+                                for i in range(len(dataset.samples))])
+        mean = all_meas.mean(dim=0)
+        std  = all_meas.std(dim=0).clamp(min=1e-6)
+        return mean, std
+
+    def _normalise(self, meas: torch.Tensor) -> torch.Tensor:
+        """Normalise raw cm measurements to roughly N(0,1)."""
+        return (meas - self.meas_mean) / self.meas_std
 
     # ------------------------------------------------------------------
     def _init_sample_log(self):
@@ -125,7 +146,7 @@ class WGANGPTrainer:
             d_losses = []
 
             for i, (meas, betas, _) in enumerate(self.dataloader):
-                meas       = meas.to(self.device, non_blocking=True)
+                meas       = self._normalise(meas).to(self.device, non_blocking=True)
                 real_betas = betas.to(self.device, non_blocking=True)
                 batch_size = meas.size(0)
 

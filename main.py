@@ -1,3 +1,20 @@
+import inspect
+import numpy as np
+import warnings
+
+# Silenciar advertencias de compatibilidad y parches
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+# Parches de compatibilidad para chumpy en Python 3.11+ y NumPy moderno
+if not hasattr(inspect, 'getargspec'):
+    inspect.getargspec = inspect.getfullargspec
+
+# chumpy busca estos atributos eliminados en numpy
+for name in ['bool', 'int', 'float', 'complex', 'object', 'unicode', 'str']:
+    if not hasattr(np, name):
+        setattr(np, name, getattr(__builtins__, name) if hasattr(__builtins__, name) else None)
+
 import argparse
 from src.config.paths import Paths
 from src.data.beta_fitter import fit_betas
@@ -32,7 +49,9 @@ def main():
     parser_infer.add_argument("--inseam", type=float, default=80.0)
     parser_infer.add_argument("--outseam", type=float, default=100.0)
     parser_infer.add_argument("--thigh", type=float, default=55.0)
-    parser_infer.add_argument("--bicep", type=float, default=28.0)
+    parser_infer.add_argument("--bicep",     type=float, default=28.0)
+    parser_infer.add_argument("--n_samples", type=int,   default=32,
+                              help="z samples to average at inference")
     parser_infer.add_argument("--show", action="store_true", help="Show 3D viewer")
     
     args = parser.parse_args()

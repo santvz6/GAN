@@ -15,6 +15,7 @@ class Paths:
     EXPERIMENTS_DIR = INTERNAL / "experiments"
     LOGS_DIR = INTERNAL / "logs"
     TEMP_DIR = INTERNAL / "temp"
+    SCALER_PATH = EXPERIMENTS_DIR / "meas_scaler.npz"
 
     NOMO3D_DIR = DATA_DIR / "nomo3d" 
     SMPL_DIR = DATA_DIR / "smpl"
