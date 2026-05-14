@@ -29,6 +29,7 @@ __pycache__/
 checkpoints/
 models/
 weights/
+!src/models/
 
 # ==========================================
 # Datos y Logs (TensorBoard, W&B, etc.)

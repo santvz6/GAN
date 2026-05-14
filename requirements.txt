@@ -20,3 +20,10 @@ smplx==0.1.28
 
 # Infer
 pyglet==1.5.31
+
+# Image rendering + FID metric
+matplotlib
+pytorch-fid
+
+# Needed to load the original SMPL .pkl (run convert_smpl.py first to strip chumpy objects)
+chumpy

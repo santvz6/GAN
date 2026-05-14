@@ -160,51 +160,48 @@ python main.py infer --gender FEMALE --height 170 --bust 90 --waist 70 --hip 95 
 
 ---
 
-## Piezas Faltantes (a implementar)
+## Componentes Implementados
 
-### 1. `fit_betas()` real — CRÍTICO
+### 1. Tabular GAN (medidas → betas) — base de Santi + `fit_betas()` real
 
-**Fichero:** `src/data/beta_fitter.py`
+- `src/data/beta_fitter.py` — `fit_betas()` con scipy Nelder-Mead optimiza los 10 betas SMPL para cada sample NOMO3D minimizando MSE ponderado contra las medidas extraídas con `MeasureSMPL`. Usa `CachedMeasureSMPL` (subclase que cachea el modelo smplx por género) y un simplex inicial con paso 0.5 para evitar estancamiento en el origen.
+- `src/train.py`, `src/eval.py`, `src/inference.py`, `src/models/generator.py`, `src/models/discriminator.py` — heredados de Santi sin cambios.
 
-**Problema actual:** devuelve `np.random.normal(0, 0.5, num_betas)`. El GAN aprende ruido.
+### 2. Image GAN (TNT15 + skeleton renders) — DCGAN 128×128 WGAN-GP
 
-**Solución:** optimización inversa con PyTorch:
-```python
-for each sample in NOMO3D:
-    betas = torch.zeros(1, 10, requires_grad=True)
-    optimizer = torch.optim.Adam([betas], lr=0.01)
-    target_meas = sample['measurements']  # del .txt
+- `src/data/render_skeleton.py` — `SkeletonRenderer` proyecta joints SMPL al plano XY y los dibuja con Pillow (huesos + joints). Función `render_batch_from_betas_cache()` produce un PNG por cada beta cacheado.
+- `src/data/tnt15_loader.py` — `TNT15Dataset` carga PNGs de `Images/mr/00..04`, resize 128×128, grayscale, normaliza a [-1,1]. Opcionalmente mezcla con renders sintéticos.
+- `src/models/image_gan.py` — `ImageGenerator` (FC → reshape 4×4 → 5 ConvTranspose 2× + LayerNorm) y `ImageDiscriminator` (4 Conv stride-2 + LayerNorm, sin BatchNorm).
+- `src/train_image.py` — `ImageWGANGPTrainer`, mismo patrón WGAN-GP que el tabular (gradient penalty, n_critic=5). Guarda grid de 16 muestras en `internal/temp/image_samples/` cada `sample_interval` epochs.
 
-    for step in range(500):
-        measurer.from_body_model(gender, shape=betas)
-        measurer.measure(measurer.all_possible_measurements)
-        pred_meas = [measurer.measurements[name_map[k]] for k in target_meas_keys]
-        loss = F.mse_loss(torch.tensor(pred_meas), target_meas)
-        loss.backward(); optimizer.step()
+### 3. Mesh GAN directo (NOMO3D point clouds) — PointNet WGAN-GP
 
-    np.save(cache_file, betas.detach().numpy())
+- `src/data/nomo3d_obj_loader.py` — `NOMO3DPointCloudDataset` carga los 356 OBJ, subsamplea a 6890 puntos con `trimesh.sample.sample_surface`, centra y escala a max-norm unitario. Cachea cada nube en `internal/data/nomo3d_pointclouds/`.
+- `src/models/mesh_gan.py` — `MeshGenerator` (MLP z → 6890×3 con LayerNorm) y `PointNetDiscriminator` (Conv1d per-punto + max-pool global + cabeza MLP, sin sigmoid).
+- `src/train_mesh.py` — `MeshWGANGPTrainer`, gradient penalty con interpolación lineal entre nubes reales y falsas. Guarda muestras como `.npy` (cargables con `np.load` para visualizar con trimesh/plotly).
+
+### 4. Métricas
+
+- `src/eval_tabular.py` — `evaluate_mmd()`: MMD² con suma de kernels RBF multi-bandwidth, estimador U insesgado.
+- `src/eval_image.py` — `evaluate_fid()`: dump N reales + N generados, llama a `python -m pytorch_fid` y parsea el score.
+- `src/eval_3d.py` — `chamfer_distance()` simétrico + `fscore(tau=0.01)`, promedio sobre N muestras.
+
+### 5. CLI consolidado
+
+`main.py` ahora expone:
+
 ```
-
-### 2. Image GAN
-
-**Ficheros a crear:**
-- `src/data/tnt15_loader.py` — carga PNGs de `Images/mr/`, resize 128×128, normaliza
-- `src/data/render_skeleton.py` — proyecta joints SMPL a 2D con Pillow (sin opencv)
-- `src/models/image_gan.py` — DCGAN 128×128 (5 ConvTranspose en G, 4 Conv en D)
-- `src/train_image.py` — bucle de entrenamiento WGAN-GP imagen
-
-### 3. Mesh GAN directo
-
-**Ficheros a crear:**
-- `src/data/nomo3d_obj_loader.py` — `trimesh.sample.sample_surface(mesh, 6890)`
-- `src/models/mesh_gan.py` — MLP gen (z → 6890×3) + PointNet disc
-- `src/train_mesh.py` — bucle WGAN-GP point cloud
-
-### 4. Métricas complementarias
-
-- `src/eval_tabular.py` — MMD (kernel RBF)
-- `src/eval_image.py` — FID (pytorch-fid, requiere `pip install pytorch-fid`)
-- `src/eval_3d.py` — Chamfer Distance + F-score (chamfer-distance ya instalado)
+fit                  — fit_betas() (preprocesa pseudo-GT)
+train                — Tabular WGAN-GP
+eval                 — MAE de medidas (Santi)
+infer ...            — medidas → mesh OBJ
+render-skeletons     — render PNGs desde betas_cache/
+train-image          — Image GAN (TNT15)
+eval-image           — FID
+train-mesh           — Mesh GAN (NOMO3D point clouds)
+eval-mesh            — Chamfer + F-score
+eval-mmd             — MMD del tabular GAN
+```
 
 ---
 
