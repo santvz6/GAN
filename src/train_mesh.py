@@ -63,7 +63,7 @@ class MeshWGANGPTrainer:
             retain_graph=True,
             only_inputs=True,
         )[0]
-        grads = grads.view(bs, -1)
+        grads = grads.reshape(bs, -1)
         return ((grads.norm(2, dim=1) - 1) ** 2).mean()
 
     def _save_samples(self, epoch: int):
