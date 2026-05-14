@@ -153,15 +153,23 @@ def _fit_one(measurer, hparams, target_meas_tensor, gender, init_betas, max_iter
         )
         return float(np.mean(weights * (preds - targets) ** 2))
 
+    n = init_betas.shape[0]
+    step = 0.5
+    initial_simplex = np.vstack([
+        init_betas.astype(np.float64),
+        *[init_betas.astype(np.float64) + step * np.eye(n)[i] for i in range(n)],
+    ])
+
     result = minimize(
         loss,
         init_betas.astype(np.float64),
         method='Nelder-Mead',
         options={
-            'maxiter': max_iter,
-            'xatol':   1e-2,
-            'fatol':   1e-2,
-            'adaptive': True,
+            'maxiter':         max_iter,
+            'xatol':           1e-2,
+            'fatol':           1e-2,
+            'adaptive':        True,
+            'initial_simplex': initial_simplex,
         },
     )
     return result.x.astype(np.float32), float(result.fun)
