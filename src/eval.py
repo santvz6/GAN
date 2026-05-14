@@ -67,11 +67,17 @@ def evaluate():
             # TODO: Implement precise name mapping if needed.
             
             # Example mapping
+            # Complete mapping from NOMO3D to MeasureSMPL names
             mapping = {
-                "BUST_Circ": "chest_circumference",
-                "NaturalWAIST_Circ": "waist_circumference",
-                "HIP_Circ": "hip_circumference",
-                # add more mappings as needed
+                "Head_Top_Height": "height",
+                "BUST_Circ": "chest circumference",
+                "NaturalWAIST_Circ": "waist circumference",
+                "HIP_Circ": "hip circumference",
+                "NeckBase_Circ": "neck circumference",
+                "Shoulder_to_Shoulder": "shoulder breadth",
+                "Inseam": "inside leg height",
+                "Thigh_Circ": "thigh left circumference",
+                "Bicep_Circ": "bicep right circumference"
             }
             
             mapped_estim = {}
