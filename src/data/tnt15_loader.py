@@ -34,22 +34,23 @@ class TNT15Dataset(Dataset):
         include_skeleton_renders: bool = False,
         max_samples: Optional[int] = None,
     ):
+        Paths.init_project()
         self.image_size = image_size
         self.hp = ImageHParams()
         subdirs = subdirs or self.hp.tnt15_subdirs
 
-        tnt_base = Paths.ROOT / "src" / "dataset" / "TNT15_V1_0" / "Images" / "mr"
-        if not tnt_base.exists():
-            raise FileNotFoundError(f"TNT15 not found at {tnt_base}")
+        if not Paths.TNT15_IMAGES_DIR.exists():
+            raise FileNotFoundError(
+                f"TNT15 images not found at {Paths.TNT15_IMAGES_DIR}. "
+                "Run Paths.init_project() to set up data junctions."
+            )
 
         self.files: List[Path] = []
         for sub in subdirs:
-            self.files.extend(sorted((tnt_base / sub).glob("*.png")))
+            self.files.extend(sorted((Paths.TNT15_IMAGES_DIR / sub).glob("*.png")))
 
-        if include_skeleton_renders:
-            sk_dir = Paths.DATA_DIR / "skeleton_renders"
-            if sk_dir.exists():
-                self.files.extend(sorted(sk_dir.glob("*.png")))
+        if include_skeleton_renders and Paths.SKELETON_RENDERS_DIR.exists():
+            self.files.extend(sorted(Paths.SKELETON_RENDERS_DIR.glob("*.png")))
 
         if max_samples is not None:
             self.files = self.files[:max_samples]

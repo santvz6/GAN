@@ -44,9 +44,9 @@ def evaluate_3d(n_samples: int = 50, tau: float = 0.01) -> dict:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     G = MeshGenerator(hp).to(device)
-    ckpts = sorted((Paths.EXPERIMENTS_DIR / "mesh").glob("mesh_wgangp_*.pt"), key=os.path.getmtime)
+    ckpts = sorted(Paths.EXPERIMENTS_MESH.glob("mesh_wgangp_*.pt"), key=os.path.getmtime)
     if not ckpts:
-        raise FileNotFoundError("No mesh GAN checkpoints found in internal/experiments/mesh/")
+        raise FileNotFoundError(f"No mesh GAN checkpoints found in {Paths.EXPERIMENTS_MESH}")
     G.load_state_dict(torch.load(ckpts[-1], map_location=device)['G_state_dict'])
     G.eval()
 

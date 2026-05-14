@@ -116,10 +116,10 @@ def render_batch_from_betas_cache(
     """
     Paths.init_project()
     if output_dir is None:
-        output_dir = Paths.DATA_DIR / "skeleton_renders"
+        output_dir = Paths.SKELETON_RENDERS_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    cache_dir = Paths.DATA_DIR / "betas_cache"
+    cache_dir = Paths.BETAS_CACHE_DIR
     if not cache_dir.exists():
         raise FileNotFoundError(f"Run fit_betas first; {cache_dir} not found")
 

@@ -63,13 +63,13 @@ def evaluate_fid(n_samples: int = 1000) -> float:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     G = ImageGenerator(hp).to(device)
-    ckpts = sorted((Paths.EXPERIMENTS_DIR / "image").glob("image_wgangp_*.pt"), key=os.path.getmtime)
+    ckpts = sorted(Paths.EXPERIMENTS_IMAGE.glob("image_wgangp_*.pt"), key=os.path.getmtime)
     if not ckpts:
-        raise FileNotFoundError("No image GAN checkpoints found in internal/experiments/image/")
+        raise FileNotFoundError(f"No image GAN checkpoints found in {Paths.EXPERIMENTS_IMAGE}")
     G.load_state_dict(torch.load(ckpts[-1], map_location=device)['G_state_dict'])
 
-    real_dir = Paths.TEMP_DIR / "fid_real"
-    fake_dir = Paths.TEMP_DIR / "fid_fake"
+    real_dir = Paths.FID_REAL_DIR
+    fake_dir = Paths.FID_FAKE_DIR
     if real_dir.exists(): shutil.rmtree(real_dir)
     if fake_dir.exists(): shutil.rmtree(fake_dir)
 

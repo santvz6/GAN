@@ -15,7 +15,6 @@ These pseudo-GT betas are loaded by NOMODataset and used as training
 targets for the conditional WGAN-GP.
 """
 
-import shutil
 import numpy as np
 import torch
 import smplx
@@ -67,54 +66,6 @@ class CachedMeasureSMPL(MeasureSMPL):
         self.joints = out.joints.squeeze().detach().cpu().numpy()
         self.faces = model.faces
         self.gender = gender
-
-
-def _ensure_smpl_models():
-    """Mirror SMPL .pkl + segmentation .json into internal/data/smpl/ where smplx expects them."""
-    dest = Paths.SMPL_DIR
-    dest.mkdir(parents=True, exist_ok=True)
-
-    candidates = [
-        Paths.ROOT / "src" / "dataset" / "AMASS" / "smpl_module_project" / "data" / "smpl",
-        Paths.ROOT / "src" / "smpl_module_project" / "data" / "smpl",
-    ]
-    src_dir = next((p for p in candidates if p.exists()), None)
-    if src_dir is None:
-        raise FileNotFoundError(
-            "SMPL .pkl models not found. Looked in:\n  " +
-            "\n  ".join(str(p) for p in candidates)
-        )
-
-    copied = 0
-    for f in src_dir.iterdir():
-        if not f.is_file():
-            continue
-        target = dest / f.name
-        if not target.exists():
-            shutil.copy(f, target)
-            copied += 1
-    if copied:
-        print(f"[setup] Copied {copied} SMPL files -> {dest}")
-
-
-def _ensure_nomo3d_data():
-    """Mirror NOMO3D measurement .txt directories into internal/data/nomo3d/ if needed."""
-    nomo_dir = Paths.NOMO3D_DIR
-    nomo_dir.mkdir(parents=True, exist_ok=True)
-
-    src_base = Paths.ROOT / "src" / "dataset" / "NOMO3D" / "nomo-scans(repetitions-removed)"
-    if not src_base.exists():
-        raise FileNotFoundError(f"NOMO3D source data not found at {src_base}")
-
-    mappings = [
-        (src_base / "female_meas_txt", nomo_dir / "female_meas_txt"),
-        (src_base / "male_meas_txt",   nomo_dir / "male_meas_txt"),
-    ]
-    for src, dst in mappings:
-        if dst.exists() or not src.exists():
-            continue
-        shutil.copytree(src, dst)
-        print(f"[setup] Copied {src.name} -> {dst}")
 
 
 def _fit_one(measurer, hparams, target_meas_tensor, gender, init_betas, max_iter):
@@ -182,9 +133,7 @@ def fit_betas(refit: bool = False, max_iter: int = 60):
     :param refit: re-fit even if cache exists.
     :param max_iter: Nelder-Mead iterations per sample.
     """
-    Paths.init_project()
-    _ensure_smpl_models()
-    _ensure_nomo3d_data()
+    Paths.init_project()   # also imports raw datasets via junctions/copies
 
     hparams = HParams()
 

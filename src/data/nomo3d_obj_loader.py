@@ -1,13 +1,14 @@
 """
 NOMO3D point cloud loader.
 
-Loads the OBJ scans under
-  src/dataset/NOMO3D/nomo-scans(repetitions-removed)/{female,male}/
+Loads the OBJ scans from Paths.NOMO3D_FEMALE_OBJ / Paths.NOMO3D_MALE_OBJ
+(populated by Paths.init_project() — directory junction or copy from
+src/dataset/NOMO3D/nomo-scans(repetitions-removed)/{female,male}/)
 and subsamples each mesh's surface to a fixed number of points
 (default 6890 — same as SMPL topology) via trimesh.sample.sample_surface.
 
-Subsampled point clouds are cached as .npy in
-internal/data/nomo3d_pointclouds/ so we only pay the trimesh cost once.
+Subsampled point clouds are cached as .npy in Paths.POINTCLOUDS_CACHE_DIR
+so we only pay the trimesh cost once.
 
 Each point cloud is mean-centered and scaled to unit max-norm so
 the GAN does not have to learn global scale/position.
@@ -43,17 +44,23 @@ def subsample_obj(obj_path: Path, num_points: int) -> np.ndarray:
 
 class NOMO3DPointCloudDataset(Dataset):
     def __init__(self, num_points: int = 6890, refresh_cache: bool = False):
+        Paths.init_project()
         self.num_points = num_points
-        base = Paths.ROOT / "src" / "dataset" / "NOMO3D" / "nomo-scans(repetitions-removed)"
-        if not base.exists():
-            raise FileNotFoundError(f"NOMO3D not found at {base}")
 
-        self.obj_files = sorted(list((base / "female").glob("*.obj")) +
-                                list((base / "male").glob("*.obj")))
+        if not Paths.NOMO3D_FEMALE_OBJ.exists() or not Paths.NOMO3D_MALE_OBJ.exists():
+            raise FileNotFoundError(
+                f"NOMO3D OBJ dirs not found at {Paths.NOMO3D_FEMALE_OBJ} / "
+                f"{Paths.NOMO3D_MALE_OBJ}. Run Paths.init_project()."
+            )
+
+        self.obj_files = sorted(
+            list(Paths.NOMO3D_FEMALE_OBJ.glob("*.obj")) +
+            list(Paths.NOMO3D_MALE_OBJ.glob("*.obj"))
+        )
         if not self.obj_files:
-            raise RuntimeError(f"No OBJ scans found under {base}")
+            raise RuntimeError("No OBJ scans found in NOMO3D folders")
 
-        self.cache_dir = Paths.DATA_DIR / "nomo3d_pointclouds"
+        self.cache_dir = Paths.POINTCLOUDS_CACHE_DIR
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         for f in self.obj_files:

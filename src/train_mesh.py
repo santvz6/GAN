@@ -43,9 +43,9 @@ class MeshWGANGPTrainer:
             pin_memory=(self.device.type == "cuda"),
         )
 
-        self.exp_dir = Paths.EXPERIMENTS_DIR / "mesh"
+        self.exp_dir = Paths.EXPERIMENTS_MESH
         self.exp_dir.mkdir(parents=True, exist_ok=True)
-        self.sample_dir = Paths.TEMP_DIR / "mesh_samples"
+        self.sample_dir = Paths.MESH_SAMPLES_DIR
         self.sample_dir.mkdir(parents=True, exist_ok=True)
 
         self.fixed_z = torch.randn(4, self.hp.noise_dim, device=self.device)
