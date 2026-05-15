@@ -1,0 +1,33 @@
+NOMO3D: scans of 400 subjects with anthropometric measurements
+
+TN15: Scans and images of actors (population not especified)
+
+HBW (validation set) : images and SMPL-X of 10 patients (6 Female and 4 Male) (anthropometric measurements?)
+
+AMASS: 300 subjects (it has SMPL and SMPL-X)
+
+Human3.6M: 11 different subjects (Image and Scanner Data)
+
+AGORA dataset
+
+I dont know about these:
+
+https://zenodo.org/records/5801562
+
+183 unique SMPL+D bodies
+
+SynBody – Synthetic 3D Human Dataset (SMPL/SMPL-X)
+
+10000 SMPL bodies
+
+THUman2.0 / THUman2.1 (SMPL-X y scans)
+
+3D Body Scans (University of Manchester — 100 sujetos)
+
+3DPatBody
+
+EMDB — 3D Pose & Shape in the Wild (SMPL parameters)
+
+BEDLAM and BEDLAM2.0 (synthetic SMPL-X movement)
+
+(Get anthropometric information with SMPL-Anthropometry module)

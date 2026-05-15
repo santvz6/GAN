@@ -30,6 +30,7 @@ checkpoints/
 models/
 weights/
 !src/models/
+!original_pre_merge/src/models/
 
 # ==========================================
 # Datos y Logs (TensorBoard, W&B, etc.)
