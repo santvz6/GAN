@@ -28,8 +28,13 @@ class Paths:
     TNT15_MODELS = TNT15_DIR / "InputFiles" / "Models_31par"
 
     # Image GAN
-    TNT15_EXTERNAL = Path(r"C:\Users\trnsr\OneDrive\Desktop\IA\Tercer año\Redes Neuronales\Practica\GAN\GAN\src\dataset\TNT15_V1_0")
-    TNT15_IMAGES_DIR = (TNT15_DIR / "Images") if (TNT15_DIR / "Images").exists() else (TNT15_EXTERNAL / "Images")
+    # Resolution order for TNT15:
+    #   1. $TNT15_ROOT env var (absolute path to a folder containing 'Images/')
+    #   2. internal/data/tnt15  (canonical project-local location)
+    # No user-specific paths are hard-coded.
+    _TNT15_ENV = os.environ.get("TNT15_ROOT", "").strip()
+    TNT15_ROOT = Path(_TNT15_ENV) if _TNT15_ENV else TNT15_DIR
+    TNT15_IMAGES_DIR = TNT15_ROOT / "Images"
     IMG_CKPT_PREFIX = "wgangp_img_ckpt_"
     IMG_SAMPLES_DIR = LOGS_DIR / "img_samples"
 

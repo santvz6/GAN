@@ -19,8 +19,11 @@ class TNT15ImageDataset(Dataset):
         root = Paths.TNT15_IMAGES_DIR
         if not Path(root).exists():
             raise FileNotFoundError(
-                f"TNT15 images dir not found: {root}. "
-                "Update Paths.TNT15_EXTERNAL or place the dataset at internal/data/tnt15/Images."
+                f"TNT15 images dir not found: {root}.\n"
+                "Place the TNT15 'Images/' folder at one of:\n"
+                f"  - {Paths.TNT15_DIR / 'Images'}  (default project location)\n"
+                "  - any absolute path, then export TNT15_ROOT=<that path> "
+                "(must contain an 'Images/' subfolder)."
             )
 
         self.files: List[Path] = self._gather(root)
