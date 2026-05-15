@@ -21,24 +21,21 @@ from src.data.beta_fitter import fit_betas
 from src.train import WGANGPTrainer
 from src.eval import evaluate
 from src.inference import infer
+from src.train_img import ImgWGANGPTrainer
+from src.inference_img import infer as infer_img
 
 def main():
     Paths.init_project()
 
     parser = argparse.ArgumentParser(description="GAN 3D Body Generation Pipeline")
     subparsers = parser.add_subparsers(dest="command", help="Available commands", required=True)
-    
-    # Fit command
+
+    # --- Tabular pipeline ---
     subparsers.add_parser("fit", help="Fit pseudo-ground-truth betas for dataset")
-    
-    # Train command
-    subparsers.add_parser("train", help="Train the WGAN-GP model")
-    
-    # Eval command
-    subparsers.add_parser("eval", help="Evaluate the model (MAE)")
-    
-    # Infer command
-    parser_infer = subparsers.add_parser("infer", help="Run inference and generate 3D mesh")
+    subparsers.add_parser("train", help="Train the tabular WGAN-GP model")
+    subparsers.add_parser("eval", help="Evaluate the tabular model (MAE)")
+
+    parser_infer = subparsers.add_parser("infer", help="Run tabular inference and generate 3D mesh")
     parser_infer.add_argument("--gender", type=str, default="FEMALE", choices=["MALE", "FEMALE", "NEUTRAL"])
     parser_infer.add_argument("--height", type=float, default=170.0)
     parser_infer.add_argument("--bust", type=float, default=90.0)
@@ -53,9 +50,17 @@ def main():
     parser_infer.add_argument("--n_samples", type=int,   default=32,
                               help="z samples to average at inference")
     parser_infer.add_argument("--show", action="store_true", help="Show 3D viewer")
-    
+
+    # --- Image pipeline (TNT15 WGAN-GP) ---
+    subparsers.add_parser("train_img", help="Train the image WGAN-GP on TNT15")
+
+    parser_infer_img = subparsers.add_parser("infer_img", help="Generate images from the trained image GAN")
+    parser_infer_img.add_argument("-n", type=int, default=16, help="Number of images to generate.")
+    parser_infer_img.add_argument("--grid", action="store_true",
+                                  help="Save as a single grid PNG instead of N separate files.")
+
     args = parser.parse_args()
-    
+
     if args.command == "fit":
         fit_betas()
     elif args.command == "train":
@@ -65,6 +70,11 @@ def main():
         evaluate()
     elif args.command == "infer":
         infer(args)
+    elif args.command == "train_img":
+        trainer = ImgWGANGPTrainer()
+        trainer.train()
+    elif args.command == "infer_img":
+        infer_img(args)
 
 if __name__ == "__main__":
     main()
