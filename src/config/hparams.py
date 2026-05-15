@@ -31,6 +31,13 @@ class HParams:
     sample_interval:     int = 100   # log sample betas every N epochs
     num_workers:         int = 4     # DataLoader parallel workers
     
+    # Beta fitting (NOMO3D pseudo-GT — iterative Gauss-Newton)
+    fit_max_iters: int = 8
+    fit_tol: float = 1e-3        # ||Δβ||₂ stopping criterion
+    fit_rel_tol: float = 1e-4    # relative residual improvement stopping criterion
+    fit_eps: float = 0.15        # central-difference step for Jacobian
+    fit_max_backtracks: int = 5  # backtracking line-search halvings
+
     # Dataset
     train_split: float = 0.8
     meas_cols: List[str] = field(default_factory=lambda: [
