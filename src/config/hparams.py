@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Tuple
 
 @dataclass
 class HParams:
@@ -45,3 +45,39 @@ class HParams:
         "Thigh_Circ",
         "Bicep_Circ"
     ])
+
+
+@dataclass
+class ImgHParams:
+    # Image
+    image_size: int = 64
+    channels: int = 1  # TNT15 segmented PNGs are grayscale
+
+    # Generator (DCGAN-style)
+    noise_dim: int = 128
+    g_feature_maps: int = 64    # base channel multiplier for G
+
+    # Discriminator
+    d_feature_maps: int = 64
+
+    # Training (WGAN-GP)
+    batch_size: int = 64
+    epochs: int = 100
+    lr_g: float = 1e-4
+    lr_d: float = 1e-4
+    b1: float = 0.5
+    b2: float = 0.9
+    n_critic: int = 5
+    lambda_gp: float = 10.0
+
+    # Logging / checkpoints
+    checkpoint_interval: int = 5
+    sample_interval: int = 1
+    sample_grid: int = 64        # how many images per sample grid (8x8)
+    num_workers: int = 4
+
+    # Dataset
+    frame_stride: int = 5         # subsample 1 of every N frames per camera
+    subjects: Tuple[str, ...] = ("mr", "pz", "sg", "sp")
+    cameras: Tuple[str, ...] = ("00", "01", "02", "03", "04")
+    train_split: float = 0.9

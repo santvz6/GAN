@@ -27,12 +27,19 @@ class Paths:
     NOMO3D_MALE_OBJ = NOMO3D_DIR / "male"
     TNT15_MODELS = TNT15_DIR / "InputFiles" / "Models_31par"
 
+    # Image GAN
+    TNT15_EXTERNAL = Path(r"C:\Users\trnsr\OneDrive\Desktop\IA\Tercer año\Redes Neuronales\Practica\GAN\GAN\src\dataset\TNT15_V1_0")
+    TNT15_IMAGES_DIR = (TNT15_DIR / "Images") if (TNT15_DIR / "Images").exists() else (TNT15_EXTERNAL / "Images")
+    IMG_CKPT_PREFIX = "wgangp_img_ckpt_"
+    IMG_SAMPLES_DIR = LOGS_DIR / "img_samples"
+
 
     @classmethod
     def init_project(cls):
         dirs = [
             cls.INTERNAL,
-            cls.DATA_DIR,  cls.EXPERIMENTS_DIR, cls.LOGS_DIR, cls.TEMP_DIR
+            cls.DATA_DIR,  cls.EXPERIMENTS_DIR, cls.LOGS_DIR, cls.TEMP_DIR,
+            cls.IMG_SAMPLES_DIR,
         ]
         for d in dirs:
             d.mkdir(parents=True, exist_ok=True)

@@ -26,3 +26,7 @@ chumpy
 # Infer
 pyglet==1.5.31
 
+# Image GAN
+torchvision
+pillow
+
