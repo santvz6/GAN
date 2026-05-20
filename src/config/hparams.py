@@ -16,7 +16,7 @@ class HParams:
     
     # Training
     batch_size: int = 128
-    epochs: int = 2000
+    epochs: int = 3000
     lr_g: float = 1e-4
     lr_d: float = 1e-4
     b1: float = 0.5

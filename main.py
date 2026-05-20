@@ -1,6 +1,20 @@
 import inspect
 import numpy as np
 import warnings
+import builtins
+
+# Guardamos la función print original
+_original_print = builtins.print
+
+# Creamos un print personalizado que filtra el aviso de SMPL
+def _custom_print(*args, **kwargs):
+    message = " ".join(map(str, args))
+    if "10 shape coefficients" in message:
+        return  # Ignora el print si contiene el texto del warning
+    _original_print(*args, **kwargs)
+
+# Sobrescribimos el print global
+builtins.print = _custom_print
 
 # Silenciar advertencias de compatibilidad y parches
 warnings.filterwarnings("ignore", category=FutureWarning)
