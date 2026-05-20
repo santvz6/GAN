@@ -1,9 +1,9 @@
 # GAN Body Lab
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.5-EE4C2C?logo=pytorch&logoColor=white)
-![SMPL](https://img.shields.io/badge/Body_Model-SMPL-4B5563)
-![WGAN-GP](https://img.shields.io/badge/GAN-WGAN--GP-111827)
+<img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python">
+<img src="https://img.shields.io/badge/PyTorch-2.5-EE4C2C?logo=pytorch&logoColor=white" alt="PyTorch">
+<img src="https://img.shields.io/badge/Body_Model-SMPL-4B5563" alt="SMPL">
+<img src="https://img.shields.io/badge/GAN-WGAN--GP-111827" alt="WGAN-GP">
 
 Proyecto de redes neuronales para generar cuerpos humanos a partir de datos
 antropométricos mínimos. El repositorio combina un pipeline tabular condicionado
@@ -23,10 +23,9 @@ por medidas corporales con una rama independiente de generación de imágenes.
 | Evaluación | Dataset de test | SMPL measurements | MAE por medida |
 
 <p align="center">
-  <img src="docs/readme_pipeline.png" alt="Placeholder del pipeline general" width="760">
+  <img src="docs/readme/pipeline.png" alt="Placeholder del pipeline general" width="760">
 </p>
 
-> Placeholder: sustituir `docs/readme_pipeline.png` por una captura o diagrama real del flujo del proyecto.
 
 ---
 
@@ -84,10 +83,9 @@ internal/temp/generated_FEMALE_170_front.png
 ```
 
 <p align="center">
-  <img src="docs/readme_output_2d.png" alt="Placeholder de salida 2D" width="420">
+  <img src="docs/readme/output_2d.png" alt="Placeholder de salida 2D" width="420">
 </p>
 
-> Placeholder: sustituir `docs/readme_output_2d.png` por una captura de la imagen generada.
 
 ### Salida 3D
 
@@ -102,10 +100,9 @@ internal/temp/generated_FEMALE_170.obj
 ```
 
 <p align="center">
-  <img src="docs/readme_output_3d.png" alt="Placeholder de salida 3D" width="520">
+  <img src="docs/readme/output_3d.png" alt="Placeholder de salida 3D" width="520">
 </p>
 
-> Placeholder: sustituir `docs/readme_output_3d.png` por una captura del OBJ abierto en un visor 3D.
 
 ### GAN de imágenes TNT15
 
@@ -120,10 +117,9 @@ internal/temp/generated_grid_64.png
 ```
 
 <p align="center">
-  <img src="docs/readme_image_gan_grid.png" alt="Placeholder del grid TNT15" width="620">
+  <img src="docs/readme/image_gan_grid.png" alt="Placeholder del grid TNT15" width="620">
 </p>
 
-> Placeholder: sustituir `docs/readme_image_gan_grid.png` por un grid real de muestras.
 
 ---
 
