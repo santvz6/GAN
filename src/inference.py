@@ -7,6 +7,7 @@ import trimesh
 from src.config.paths import Paths
 from src.config.hparams import HParams
 from src.models import Generator
+from src.render_2d import render_mesh_to_png
 from src.smpl_module_project.measure import MeasureBody
 
 
@@ -78,13 +79,33 @@ def infer(args):
 
     verts = measurer.verts
     faces = measurer.faces
-    mesh  = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+    output_mode = getattr(args, "output", "image")
+    output_stem = f"generated_{args.gender}_{args.height:g}"
+    mesh = None
 
-    output_path = Paths.TEMP_DIR / f"generated_{args.gender}_{args.height}.obj"
-    mesh.export(output_path)
-    print(f"Mesh saved to {output_path}")
+    if output_mode in ("mesh", "both"):
+        mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+        output_path = Paths.TEMP_DIR / f"{output_stem}.obj"
+        mesh.export(output_path)
+        print(f"Mesh saved to {output_path}")
+
+    if output_mode in ("image", "both"):
+        image_size = getattr(args, "image_size", 512)
+        view = getattr(args, "view", "front")
+        image_path = Paths.TEMP_DIR / f"{output_stem}_{view}.png"
+        render_mesh_to_png(
+            verts=verts,
+            faces=faces,
+            output_path=image_path,
+            image_size=image_size,
+            view=view,
+            draw_edges=getattr(args, "wireframe", False),
+        )
+        print(f"2D image saved to {image_path}")
 
     if args.show:
+        if mesh is None:
+            mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
         mesh.show()
 
 
@@ -106,6 +127,16 @@ if __name__ == "__main__":
     parser.add_argument("--bicep",     type=float, default=28.0)
     parser.add_argument("--n_samples", type=int,   default=32,
                         help="Number of z samples to average (reduces noise variance)")
+    parser.add_argument("--output",    type=str,   default="image",
+                        choices=["image", "mesh", "both"],
+                        help="Output format: 2D PNG image, 3D OBJ mesh, or both.")
+    parser.add_argument("--view",      type=str,   default="front",
+                        choices=["front", "side", "back"],
+                        help="Camera view used for the 2D PNG render.")
+    parser.add_argument("--image_size", type=int,  default=512,
+                        help="Output PNG size in pixels.")
+    parser.add_argument("--wireframe", action="store_true",
+                        help="Draw triangle edges in the 2D PNG render.")
     parser.add_argument("--show",      action="store_true", help="Show 3D viewer")
 
     args = parser.parse_args()
