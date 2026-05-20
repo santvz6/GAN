@@ -1,35 +1,1015 @@
-% ESPECIFICAR LA PLANTILLA QUE USAREMOS
+% ============================================================
+%  GAN Body Lab — Memoria del Proyecto
+%  Redes Neuronales y Aprendizaje Profundo · RNAP UA
+%  Universidad de Alicante · Ingeniería en Inteligencia Artificial
+% ============================================================
+\documentclass[a4paper,11pt]{article}
 
-\icmltitlerunning{}
+% --- Codificación y lengua ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
 
+% --- Geometría y tipografía ---
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.8cm, right=2.8cm]{geometry}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Matemáticas ---
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+
+% --- Figuras y tablas ---
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tabularx}
+
+% --- Código fuente ---
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{keyblue}{rgb}{0.0,0.3,0.7}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{keyblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{gray!40},
+}
+\lstset{style=mystyle}
+
+% --- Algoritmos ---
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algrenewcommand\algorithmicforall{\textbf{for each}}
+
+% --- Hipervínculos ---
+\usepackage[hidelinks, colorlinks=true,
+            linkcolor=blue!60!black,
+            citecolor=green!50!black,
+            urlcolor=blue!70!black]{hyperref}
+
+% --- Encabezados y pie de página ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{GAN Body Lab}}
+\fancyhead[R]{\small\textit{RNAP UA · 2026}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Miscelánea ---
+\usepackage{enumitem}
+\usepackage{csquotes}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+
+% --- Bibliografía ---
+\usepackage[style=numeric, sorting=none, backend=biber]{biblatex}
+\addbibresource{main.bib}
+
+% ============================================================
+%  DOCUMENTO
+% ============================================================
 \begin{document}
 
-\twocolumn[
-\icmltitle{2}
+% ---- Portada -----------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+    {\Huge\bfseries GAN Body Lab\par}
+    \vspace{0.5cm}
+    {\Large Generación de Cuerpos Humanos mediante\\
+    Redes Generativas Adversariales\par}
+    \vspace{2cm}
+    \includegraphics[width=0.55\textwidth]{../docs/readme/pipeline.png}
+    \vspace{2cm}
 
-\begin{icmlauthorlist}
-\icmlauthor{Santiago Álvarez Geanta}{ua}
-\icmlauthor{Alejandro García Belmonte}{ua}
-\icmlauthor{Guillermo García Blázquez}{ua}
-\icmlauthor{Taron Sargsyan}{ua}
-\end{icmlauthorlist}
+    \begin{tabular}{ll}
+        \textbf{Autores:} &
+        Santiago Álvarez Geanta \\
+        & Alejandro García Belmonte \\
+        & Guillermo García Blázquez \\
+        & Taron Sargsyan \\[8pt]
+        \textbf{Asignatura:} & Redes Neuronales y Aprendizaje Profundo \\
+        \textbf{Institución:} & Universidad de Alicante ·
+                                Ingeniería en Inteligencia Artificial \\
+        \textbf{Fecha:}       & Mayo 2026 \\
+    \end{tabular}
 
-\icmlaffiliation{ua}{Universidad de Alicante, Ingeniería en Inteligencia Artificial}
+    \vfill
+    {\small
+        \href{mailto:sag82@alu.ua.es}{sag82@alu.ua.es}
+    }
+\end{titlepage}
 
-\icmlcorrespondingauthor{Santiago Álvarez Geanta}{sag82@alu.ua.es}
-\icmlcorrespondingauthor{Alejandro García Belmonte}{}
-\icmlcorrespondingauthor{Guillermo García Blázquez}{}
-\icmlcorrespondingauthor{Taron Sargsyan}{}
+% ---- Índice ------------------------------------------------
+\tableofcontents
+\newpage
 
-\icmlkeywords{}
+% ============================================================
+\section{Introducción y Motivación}
+% ============================================================
 
-\vskip 0.3in
-]
+El presente proyecto, denominado \textbf{GAN Body Lab}, aborda el problema
+de la generación sintética de cuerpos humanos a partir de datos
+antropométricos. Esta tarea tiene aplicaciones directas en industrias como
+la moda, el diseño ergonómico, la medicina y los videojuegos, donde disponer
+de avatares corporales realistas y controlables supone una ventaja
+significativa.
 
+La motivación central surge de una pregunta práctica: ¿es posible construir
+un modelo que, recibiendo únicamente un conjunto reducido de medidas corporales
+(altura, contorno de pecho, cintura, cadera, etc.), sea capaz de sintetizar
+una forma corporal 3D plausible y coherente con esas restricciones? La respuesta
+que este proyecto propone es afirmativa, y se apoya en el uso de
+\textbf{Redes Generativas Adversariales} (GANs) condicionadas por las medidas
+de entrada.
 
-\begin{abstract}
-\end{abstract}
+El proyecto implementa dos pipelines complementarios e independientes:
 
+\begin{enumerate}[leftmargin=*, label=(\arabic*)]
+    \item \textbf{Pipeline Tabular}: aprende una correspondencia generativa entre
+          medidas antropométricas y parámetros de forma del modelo SMPL
+          (\textit{betas}). La salida puede exportarse como imagen 2D (PNG) o
+          malla 3D (OBJ).
+    \item \textbf{Pipeline de Imagen}: aprende la distribución visual de imágenes
+          de cuerpos humanos segmentados del dataset TNT15, generando siluetas
+          plausibles desde ruido aleatorio, sin condicionamiento explícito.
+\end{enumerate}
 
+Ambos pipelines comparten la misma arquitectura de pérdida,
+\textbf{WGAN-GP} (Wasserstein GAN con Gradient Penalty)~\cite{gulrajani2017},
+que es una de las variantes más estables del framework GAN original propuesto
+por Goodfellow et al.\ en 2014~\cite{goodfellow2014}.
+
+% ============================================================
+\section{Fundamentos Teóricos de las GANs}
+% ============================================================
+
+\subsection{Contexto: Modelos Generativos}
+
+Los modelos generativos aprenden a estimar la distribución subyacente $p(\bm{x})$
+de los datos de entrenamiento con el fin de generar nuevas muestras realistas.
+Los tres paradigmas principales son:
+
+\begin{description}[leftmargin=!, labelwidth=2.5cm]
+    \item[\textbf{VAE}] Codifica datos en un espacio latente estructurado y los
+          reconstruye. Entrenamiento estable, pero produce muestras desenfocadas.
+    \item[\textbf{GAN}] Enfrenta un generador contra un discriminador en un juego
+          adversarial. Alta calidad visual, pero inestable y propenso al
+          \textit{mode collapse}.
+    \item[\textbf{Diffusion}] Revierte un proceso gradual de adición de ruido.
+          Máxima calidad y diversidad, pero inferencia lenta (muchos pasos de
+          denoising).
+\end{description}
+
+El presente proyecto opta por GANs porque las salidas de alta nitidez son
+prioritarias, y la comunidad ha desarrollado variantes estables (WGAN-GP)
+que hacen el entrenamiento manejable.
+
+\subsection{El Framework GAN Original}
+\label{sec:gan_original}
+
+Las Redes Generativas Adversariales fueron introducidas por
+Goodfellow et al.~\cite{goodfellow2014} en el artículo seminal
+\textit{``Generative Adversarial Nets''} (NIPS 2014). El framework propone
+entrenar simultáneamente dos redes:
+
+\begin{itemize}
+    \item \textbf{Generador $G$}: aprende una distribución $p_g$ sobre los datos.
+          Recibe ruido latente $\bm{z} \sim p_z(\bm{z})$ y lo mapea al espacio
+          de datos mediante $G(\bm{z};\,\theta_g)$. Su objetivo es que sus
+          muestras sean indistinguibles de los datos reales.
+    \item \textbf{Discriminador $D$}: recibe muestras reales
+          $\bm{x} \sim p_{\text{data}}(\bm{x})$ y falsas $G(\bm{z})$, y produce
+          un escalar $D(\bm{x};\,\theta_d)$ que estima la probabilidad de que
+          $\bm{x}$ provenga de los datos reales. Su objetivo es clasificar
+          correctamente reales de falsos.
+\end{itemize}
+
+La metáfora de los autores es ilustrativa: $G$ actúa como falsificadores
+que producen moneda falsa, mientras que $D$ actúa como la policía que intenta
+detectarlos. La competición entre ambos los impulsa a mejorar mutuamente.
+
+\subsection{La Función Objetivo Minimax}
+
+El entrenamiento conjunto de $G$ y $D$ corresponde a un juego minimax de dos
+jugadores con la función de valor $V(G,D)$:
+
+\begin{equation}
+    \label{eq:minimax}
+    \min_{G}\;\max_{D}\;V(D,G)
+    = \mathbb{E}_{\bm{x}\sim p_{\text{data}}(\bm{x})}\!\left[\log D(\bm{x})\right]
+    + \mathbb{E}_{\bm{z}\sim p_z(\bm{z})}\!\left[\log\!\left(1-D(G(\bm{z}))\right)\right]
+\end{equation}
+
+\paragraph{Interpretación de cada término.}
+
+\begin{itemize}
+    \item $\mathbb{E}\!\left[\log D(\bm{x})\right]$: $D$ recibe una muestra
+          \emph{real} $\bm{x}$ y quiere que $D(\bm{x})\to 1$, es decir,
+          $\log D(\bm{x})\to 0$ (máximo). Si $D$ es engañado y produce 0.5,
+          entonces $\log(0.5)=-0.69$, lo cual es peor para él.
+    \item $\mathbb{E}\!\left[\log(1-D(G(\bm{z})))\right]$: $G$ genera una muestra
+          falsa. $D$ quiere $D(G(\bm{z}))\to 0$; $G$ quiere lo contrario:
+          $D(G(\bm{z}))\to 1$, haciendo este término muy negativo (mínimo).
+\end{itemize}
+
+En la práctica, $\log(1-D(G(\bm{z})))$ satura cuando $D$ rechaza
+confiadamente las muestras al inicio. Por eso, en la práctica se entrena $G$
+para \emph{maximizar} $\log D(G(\bm{z}))$: el punto fijo es el mismo,
+pero los gradientes son más fuertes al inicio.
+
+\subsection{La Distribución Normal como Espacio Latente}
+
+El ruido latente $\bm{z}$ se muestrea de $\mathcal{N}(\bm{0},\bm{I})$.
+Esta elección no es arbitraria:
+
+\begin{itemize}
+    \item La distribución normal cubre todo $\mathbb{R}^n$ sin ``zonas muertas'',
+          eliminando regiones del espacio latente que nunca se explorarían.
+    \item Cualquier distribución puede obtenerse transformando una normal
+          mediante una función suficientemente expresiva (y una red profunda
+          lo es).
+    \item $\mathcal{N}(\bm{0},\bm{I})$ es \emph{isotrópica}: todas las
+          direcciones latentes son tratadas por igual, lo que hace funcionar
+          la interpolación y la aritmética de vectores en el espacio latente.
+\end{itemize}
+
+En el presente proyecto, el generador tabular usa $\text{noise\_dim}=64$ y
+el generador de imagen usa $\text{noise\_dim}=128$.
+
+\subsection{El Equilibrio de Nash y la Convergencia}
+
+Desde la teoría de juegos, el entrenamiento busca el \textbf{equilibrio de Nash}:
+ningún jugador puede mejorar cambiando únicamente su propia estrategia.
+Esto ocurre cuando $D(G(\bm{z}))=0.5$: el discriminador esencialmente lanza
+una moneda, porque las muestras falsas son indistinguibles de las reales.
+
+Goodfellow et al.\ demostraron formalmente:
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!50!black, title=Proposición 1 (Discriminador Óptimo)]
+Para $G$ fijo, el discriminador óptimo $D^*$ es:
+\begin{equation}
+    \label{eq:dstar}
+    D^*_G(\bm{x}) = \frac{p_{\text{data}}(\bm{x})}{p_{\text{data}}(\bm{x}) + p_g(\bm{x})}
+\end{equation}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!50!black, title=Teorema 1 (Óptimo Global)]
+El mínimo global del criterio de entrenamiento $C(G)$ se alcanza si y solo si
+$p_g = p_{\text{data}}$. En ese punto, $C(G) = -\log 4$.
+\end{tcolorbox}
+
+La función de valor del minimax puede reformularse en términos de la
+\textbf{divergencia Jensen-Shannon}:
+
+\begin{equation}
+    \label{eq:jsd}
+    C(G) = -\log 4 + 2\cdot\text{JSD}(p_{\text{data}} \,\|\, p_g)
+\end{equation}
+
+Dado que JSD es siempre no-negativa y vale cero solo cuando las distribuciones
+son iguales, el único mínimo global es $p_g = p_{\text{data}}$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../docs/readme/pipeline.png}
+    \caption{Pipeline completo del sistema GAN Body Lab. \textbf{Arriba:}
+    workflow de generación de malla 3D condicionada por medidas (Conditional
+    WGAN-GP + SMPL). \textbf{Abajo:} workflow de generación de siluetas 2D
+    incondicional (DCGAN + WGAN-GP sobre TNT15).}
+    \label{fig:pipeline}
+\end{figure}
+
+\subsection{Algoritmo de Entrenamiento}
+
+El Algoritmo~\ref{alg:gan} es el algoritmo de entrenamiento minimax por
+lotes estocásticos presentado en el paper original.
+
+\begin{algorithm}[H]
+\caption{Entrenamiento minibatch estocástico de GANs (Goodfellow et al., 2014)}
+\label{alg:gan}
+\begin{algorithmic}[1]
+\For{número de iteraciones de entrenamiento}
+    \For{$k$ pasos}
+        \State Muestrear $\{\bm{z}^{(1)},\ldots,\bm{z}^{(m)}\} \sim p_z(\bm{z})$
+        \State Muestrear $\{\bm{x}^{(1)},\ldots,\bm{x}^{(m)}\} \sim p_{\text{data}}(\bm{x})$
+        \State Actualizar $D$ ascendiendo su gradiente estocástico:
+        \[
+            \nabla_{\theta_d}\;\frac{1}{m}\sum_{i=1}^{m}
+            \Bigl[\log D\!\left(\bm{x}^{(i)}\right)
+            +\log\!\left(1-D\!\left(G\!\left(\bm{z}^{(i)}\right)\right)\right)\Bigr]
+        \]
+    \EndFor
+    \State Muestrear $\{\bm{z}^{(1)},\ldots,\bm{z}^{(m)}\} \sim p_z(\bm{z})$
+    \State Actualizar $G$ descendiendo su gradiente estocástico:
+    \[
+        \nabla_{\theta_g}\;\frac{1}{m}\sum_{i=1}^{m}
+        \log\!\left(1-D\!\left(G\!\left(\bm{z}^{(i)}\right)\right)\right)
+    \]
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+% ============================================================
+\section{Variantes y Mejoras de las GANs}
+% ============================================================
+
+\subsection{DCGAN: Deep Convolutional GAN}
+
+Propuesto por Radford et al.~\cite{radford2015}, DCGAN introduce las siguientes
+guías de arquitectura para GANs convolucionales estables:
+
+\begin{itemize}
+    \item Reemplazar el \textit{pooling} con convoluciones con \textit{stride}
+          (discriminador) y convoluciones fraccionadas (\textit{generator}).
+    \item Usar \textit{BatchNorm} tanto en el generador como en el discriminador.
+    \item Eliminar las capas completamente conectadas en arquitecturas profundas.
+    \item Usar \texttt{ReLU} en el generador (excepto la salida, que usa
+          \texttt{Tanh}).
+    \item Usar \texttt{LeakyReLU} en el discriminador en todas las capas.
+\end{itemize}
+
+\subsection{Conditional GAN (cGAN)}
+\label{sec:cgan}
+
+Propuesta por Mirza y Osindero~\cite{mirza2014} en
+\textit{``Conditional Generative Adversarial Nets''} (2014), la cGAN extiende
+el framework GAN añadiendo información de condicionamiento $\bm{y}$ a ambas
+redes. La función objetivo condicionada es:
+
+\begin{equation}
+    \label{eq:cgan}
+    \min_{G}\;\max_{D}\;V(D,G)
+    = \mathbb{E}_{\bm{x}\sim p_{\text{data}}(\bm{x})}\!\left[\log D(\bm{x}\mid\bm{y})\right]
+    + \mathbb{E}_{\bm{z}\sim p_z(\bm{z})}\!\left[\log\!\left(1-D(G(\bm{z}\mid\bm{y}))\right)\right]
+\end{equation}
+
+En el generador, el ruido $p_z(\bm{z})$ y $\bm{y}$ se combinan en una
+representación oculta conjunta. En el discriminador, $\bm{x}$ e $\bm{y}$
+se presentan como entradas adicionales. En el presente proyecto, el Generador
+tabular es exactamente una cGAN: recibe tanto $\bm{z}\in\mathbb{R}^{64}$
+como las 10 medidas corporales normalizadas, y genera los 10 parámetros
+$\bm{\beta}$ SMPL condicionados a esas medidas.
+
+\subsection{WGAN y WGAN-GP}
+
+\subsubsection{Problemas del GAN original}
+
+El GAN original sufre dos problemas principales:
+
+\begin{enumerate}
+    \item \textbf{Gradientes desaparecidos}: cuando $D$ es demasiado bueno al
+          inicio, $\log(1-D(G(\bm{z})))\approx 0$ y el gradiente del generador
+          se desvanece.
+    \item \textbf{Mode collapse}: $G$ aprende a producir siempre el mismo output,
+          ignorando la diversidad real del espacio de datos.
+\end{enumerate}
+
+\subsubsection{WGAN-GP (Gulrajani et al., 2017)}
+
+WGAN-GP~\cite{gulrajani2017} reemplaza la función de valor por la distancia
+de Wasserstein e impone la restricción 1-Lipschitz mediante una
+\textbf{penalización del gradiente}:
+
+\begin{equation}
+    \label{eq:wgangp_loss}
+    \mathcal{L}_D =
+    -\,\mathbb{E}\!\left[D(\bm{x}_{\text{real}})\right]
+    +\,\mathbb{E}\!\left[D(G(\bm{z}))\right]
+    +\;\lambda\;\mathbb{E}\!\left[\!\left(\left\|\nabla_{\hat{\bm{x}}}\,
+    D(\hat{\bm{x}})\right\|_2 - 1\right)^2\right]
+\end{equation}
+
+\begin{equation}
+    \label{eq:wgangp_g}
+    \mathcal{L}_G = -\,\mathbb{E}\!\left[D(G(\bm{z}))\right]
+\end{equation}
+
+donde $\hat{\bm{x}} = \alpha\,\bm{x}_{\text{real}} + (1-\alpha)\,G(\bm{z})$,
+con $\alpha\sim\mathcal{U}[0,1]$, y $\lambda=10$ (usado en este proyecto
+como \texttt{lambda\_gp=10.0}).
+
+\begin{tcolorbox}[colback=orange!5!white, colframe=orange!60!black,
+                  title=Nota técnica: BatchNorm $\times$ WGAN-GP]
+La penalización del gradiente requiere derivar la salida del discriminador
+respecto a cada muestra individualmente. BatchNorm acopla las muestras del
+batch, lo que rompe ese supuesto. Por eso, en ambos discriminadores de este
+proyecto se usa \textbf{GroupNorm(num\_groups=1)} (equivalente a LayerNorm
+por muestra) en lugar de BatchNorm.
+\end{tcolorbox}
+
+% ============================================================
+\section{Descripción del Proyecto}
+% ============================================================
+
+\subsection{Objetivos}
+
+\begin{enumerate}
+    \item Implementar una Conditional WGAN-GP que mapee 10 medidas
+          antropométricas a 10 parámetros de forma SMPL ($\bm{\beta}$).
+    \item Implementar un sistema de ajuste de $\bm{\beta}$ SMPL
+          (pseudo-ground-truth) mediante optimización Gauss-Newton no lineal.
+    \item Implementar un DCGAN + WGAN-GP capaz de generar siluetas humanas
+          plausibles desde ruido aleatorio usando TNT15.
+    \item Proveer una CLI completa (\texttt{main.py}) para entrenar, evaluar
+          e inferir con ambos pipelines.
+\end{enumerate}
+
+\subsection{Pipeline General}
+
+El sistema completo, ilustrado en la Figura~\ref{fig:pipeline}, se divide en
+dos workflows:
+
+\begin{description}
+    \item[\textbf{Workflow superior}] (Generación de malla 3D controlable):
+          Recibe medidas numéricas corporales combinadas con un vector de
+          condicionamiento $Z_c$. Entra en una Conditional WGAN-GP y produce
+          dos salidas: (A) malla 3D del cuerpo humano (vértices/caras, OBJ)
+          y (B) proyección 2D (mapa de profundidad/siluetas, PNG).
+    \item[\textbf{Workflow inferior}] (Generación incondicional de siluetas 2D):
+          Recibe ruido aleatorio $Z$ que entra en una DCGAN entrenada sobre
+          siluetas binarizadas del dataset TNT15, produciendo siluetas 2D
+          segmentadas.
+\end{description}
+
+% ============================================================
+\section{Datasets}
+% ============================================================
+
+\subsection{NOMO3D: Medidas Antropométricas}
+
+NOMO3D es el dataset principal del pipeline tabular. Contiene medidas corporales
+de sujetos humanos reales en formato textual (ficheros \texttt{.txt} con líneas
+\texttt{MEASURE nombre=valor} en centímetros). El sistema lee 10 medidas para
+construir el vector de condicionamiento:
+
+\begin{table}[H]
+    \centering
+    \caption{Medidas corporales usadas como vector de condicionamiento.}
+    \label{tab:medidas}
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Campo NOMO3D} & \textbf{Significado físico} \\
+        \midrule
+        \texttt{Head\_Top\_Height}        & Altura total del cuerpo (cm)          \\
+        \texttt{BUST\_Circ}               & Contorno de pecho/busto (cm)          \\
+        \texttt{NaturalWAIST\_Circ}       & Contorno de cintura natural (cm)      \\
+        \texttt{HIP\_Circ}                & Contorno de cadera (cm)               \\
+        \texttt{NeckBase\_Circ}           & Contorno de cuello en la base (cm)    \\
+        \texttt{Shoulder\_to\_Shoulder}   & Anchura de hombros (cm)               \\
+        \texttt{Inseam}                   & Tiro interior (cm)                    \\
+        \texttt{Outseam}                  & Largo exterior de pierna (cm)         \\
+        \texttt{Thigh\_Circ}              & Contorno de muslo (cm)                \\
+        \texttt{Bicep\_Circ}              & Contorno de bíceps (cm)               \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+La división train/test es 80\%/20\% (configurable), con semilla fija
+(\texttt{np.random.seed(42)}) para reproducibilidad. Las medidas se normalizan
+con Z-score calculado sobre el conjunto de entrenamiento y guardado en
+\texttt{internal/experiments/meas\_scaler.npz}.
+
+\subsection{SMPL: Modelo Paramétrico de Cuerpo Humano}
+
+SMPL~\cite{loper2015} (Skinned Multi-Person Linear Model) es el modelo
+paramétrico de cuerpo humano que sirve de ``capa de decodificación'' para
+convertir los $\bm{\beta}$ generados por la GAN en una malla 3D coherente.
+SMPL describe la forma corporal mediante:
+
+\begin{itemize}
+    \item \textbf{Parámetros de forma $\bm{\beta} \in \mathbb{R}^{10}$}: captura
+          variaciones de forma entre individuos (talla, complexión, proporciones).
+    \item \textbf{Parámetros de pose $\bm{\theta}$}: ángulos articulares.
+    \item La malla resultante tiene \textbf{6890 vértices} y $\approx$13000 caras.
+\end{itemize}
+
+\subsection{TNT15: Dataset de Siluetas}
+
+TNT15 contiene cuatro sujetos (\texttt{mr}, \texttt{pz}, \texttt{sg},
+\texttt{sp}) grabados desde cinco cámaras (\texttt{00}–\texttt{04}), con
+PNGs ya segmentados (sujeto en gris sobre fondo negro).
+
+\begin{itemize}
+    \item $\approx$100\,000 frames brutos; $\approx$20\,600 efectivos tras
+          submuestreo con \texttt{frame\_stride=5}.
+    \item Imágenes en escala de grises (1 canal).
+    \item Redimensionado a $64\times64$, normalización a $[-1,1]$.
+    \item Split train/test: 90\%/10\% por orden alfabético.
+\end{itemize}
+
+% ============================================================
+\section{Arquitectura del Sistema}
+% ============================================================
+
+\subsection{Pipeline Tabular: Medidas $\to$ Cuerpo SMPL}
+
+El pipeline tabular es una Conditional GAN donde generador y discriminador
+son MLP:
+
+\begin{align*}
+    \text{Entradas del generador:}\quad   & \bm{z}\in\mathbb{R}^{64},\quad
+                                             \bm{c}\in\mathbb{R}^{10} \text{ (medidas norm.)} \\
+    \text{Salida del generador:}\quad      & \bm{\beta}\in\mathbb{R}^{10} \text{ (shape params SMPL)} \\
+    \text{Entradas del discriminador:}\quad & \bm{\beta}\in\mathbb{R}^{10},\quad
+                                              \bm{c}\in\mathbb{R}^{10} \\
+    \text{Salida del discriminador:}\quad  & s\in\mathbb{R} \text{ (score Wasserstein, sin activación)}
+\end{align*}
+
+\subsection{Pipeline de Imagen: Ruido $\to$ Silueta Humana}
+
+El pipeline de imagen sigue DCGAN + WGAN-GP sin condicionamiento:
+
+\begin{align*}
+    \text{Entrada del generador:}\quad   & \bm{z}\in\mathbb{R}^{128} \\
+    \text{Salida del generador:}\quad    & \bm{I}\in\mathbb{R}^{1\times64\times64}
+                                           \text{ (imagen en } [-1,1]) \\
+    \text{Entrada del discriminador:}\quad & \bm{I}\in\mathbb{R}^{1\times64\times64} \\
+    \text{Salida del discriminador:}\quad  & s\in\mathbb{R} \text{ (sin sigmoid)}
+\end{align*}
+
+% ============================================================
+\section{Modelos Implementados}
+% ============================================================
+
+\subsection{Generador Tabular Condicional}
+
+\textbf{Archivo:} \texttt{src/models/generator.py}
+
+El generador implementado es \texttt{\_GeneratorWithResidual}, que divide
+la red en tres segmentos:
+
+\paragraph{Pre-peak.} Desde la entrada concatenada
+$[\bm{z};\bm{c}]\in\mathbb{R}^{74}$ hasta el pico de dimensionalidad:
+
+\begin{center}
+\texttt{Linear(74$\to$256) + LayerNorm + LeakyReLU(0.2)} \\
+\texttt{Linear(256$\to$512) + LayerNorm + LeakyReLU(0.2)} \\
+\texttt{Linear(512$\to$1024) + LayerNorm + LeakyReLU(0.2)}
+\end{center}
+
+\paragraph{Bloque residual} en el pico ($\text{dim}=1024$):
+\[
+    \text{ResBlock}(\bm{x}) = \text{LeakyReLU}\!\left(\bm{x}
+    + \bigl[\text{Lin}\to\text{LN}\to\text{LReLU}\to\text{Lin}\to\text{LN}\bigr](\bm{x})\right)
+\]
+
+\paragraph{Post-peak} hasta la salida:
+\begin{center}
+\texttt{Linear(1024$\to$512) + LayerNorm + LeakyReLU(0.2)} \\
+\texttt{Linear(512$\to$256) + LayerNorm + LeakyReLU(0.2)} \\
+\texttt{Linear(256$\to$10)} \hspace{0.5em} \textit{(sin activación)}
+\end{center}
+
+Inicialización: Kaiming Normal con $a=0.2$; sesgo=0.
+
+\subsection{Discriminador Tabular}
+
+\textbf{Archivo:} \texttt{src/models/discriminator.py}
+
+\begin{center}
+$[\bm{\beta};\bm{c}]\in\mathbb{R}^{20}$
+$\xrightarrow{\text{Lin}+\text{LReLU}}$ 256
+$\xrightarrow{\text{Lin}+\text{LReLU}}$ 128
+$\xrightarrow{\text{Lin}+\text{LReLU}}$ 64
+$\xrightarrow{\text{Lin}}$ $\mathbb{R}$ (sin sigmoid)
+\end{center}
+
+Sin BatchNorm: la penalización del gradiente WGAN-GP requiere independencia
+entre muestras, que BatchNorm viola.
+
+\subsection{Generador de Imagen (DCGAN)}
+
+\textbf{Archivo:} \texttt{src/models/img\_generator.py}
+
+Arquitectura para $64\times64$, 1 canal, \texttt{noise\_dim}=128,
+\texttt{g\_feature\_maps}=64:
+
+\begin{table}[H]
+    \centering
+    \caption{Arquitectura del ImgGenerator.}
+    \label{tab:imggen}
+    \begin{tabular}{@{}llll@{}}
+        \toprule
+        \textbf{Capa} & \textbf{Operación} & \textbf{Tamaño salida} & \textbf{Norm.} \\
+        \midrule
+        Entrada       & reshape            & $(B,128,1,1)$          & —              \\
+        ConvT1        & $4\times4$, s=1    & $(B,512,4,4)$          & BN + ReLU      \\
+        ConvT2        & $4\times4$, s=2    & $(B,256,8,8)$          & BN + ReLU      \\
+        ConvT3        & $4\times4$, s=2    & $(B,128,16,16)$        & BN + ReLU      \\
+        ConvT4        & $4\times4$, s=2    & $(B,64,32,32)$         & BN + ReLU      \\
+        ConvT5 (out)  & $4\times4$, s=2    & $(B,1,64,64)$          & Tanh           \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+El número de bloques se calcula automáticamente como
+$n = \log_2(\texttt{image\_size})-2$, haciendo la arquitectura
+independiente del tamaño objetivo.
+
+\subsection{Discriminador de Imagen (Crítico CNN)}
+
+\textbf{Archivo:} \texttt{src/models/img\_discriminator.py}
+
+\begin{table}[H]
+    \centering
+    \caption{Arquitectura del ImgDiscriminator.}
+    \label{tab:imgdisc}
+    \begin{tabular}{@{}llll@{}}
+        \toprule
+        \textbf{Capa} & \textbf{Operación} & \textbf{Tamaño salida} & \textbf{Norm.} \\
+        \midrule
+        Entrada       & —                  & $(B,1,64,64)$          & —              \\
+        Conv1         & $4\times4$, s=2    & $(B,64,32,32)$         & LeakyReLU      \\
+        Conv2         & $4\times4$, s=2    & $(B,128,16,16)$        & GN(1)+LReLU    \\
+        Conv3         & $4\times4$, s=2    & $(B,256,8,8)$          & GN(1)+LReLU    \\
+        Conv4         & $4\times4$, s=2    & $(B,512,4,4)$          & GN(1)+LReLU    \\
+        Conv5 (out)   & $4\times4$, s=1    & $(B,1,1,1)$            & —              \\
+        flatten       & —                  & $(B,1)$                & sin sigmoid    \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\texttt{GroupNorm(num\_groups=1)}: equivalente a LayerNorm sobre $(C,H,W)$.
+Normaliza por muestra de forma independiente, respetando el supuesto de
+independencia requerido por WGAN-GP.
+
+% ============================================================
+\section{Pre-procesamiento: Beta Fitter (Gauss-Newton)}
+% ============================================================
+
+\textbf{Archivo:} \texttt{src/data/beta\_fitter.py}
+
+Antes de entrenar la GAN tabular, se obtiene para cada muestra de NOMO3D
+el vector $\bm{\beta}^*$ que mejor reproduce las 10 medidas del dataset.
+La cadena de medición (MeasureBody sobre trimesh) no es diferenciable, por
+lo que se usa diferencias finitas centrales para el Jacobiano.
+
+\begin{algorithm}[H]
+\caption{Ajuste de $\bm{\beta}$ SMPL por Gauss-Newton}
+\label{alg:gn}
+\begin{algorithmic}[1]
+\Require{Target de medidas $\bm{t}\in\mathbb{R}^{10}$, género, tolerancias}
+\Ensure{$\bm{\beta}^*\in[-3,3]^{10}$}
+
+\State \textbf{Fase 1 — Warm-start lineal (linearización en $\bm{\beta}=\bm{0}$):}
+\State $\bm{m}_0 \gets \text{SMPL}(\bm{0},\text{gender})$
+\For{$k = 0,\ldots,9$}
+    \State $J_{:,k} \gets [\text{SMPL}(\bm{0}+\varepsilon\bm{e}_k) - \text{SMPL}(\bm{0}-\varepsilon\bm{e}_k)] / (2\varepsilon)$
+\EndFor
+\State $\bm{\beta}_0 \gets \text{clip}(\text{lstsq}(J,\, \bm{t}-\bm{m}_0),\,-3,3)$
+
+\State \textbf{Fase 2 — Gauss-Newton iterativo (re-linearización en $\bm{\beta}_k$):}
+\For{$\text{iter} = 1,\ldots,8$}
+    \State Re-computar $J_k$ en $\bm{\beta}_k$ (idem, costo $2\cdot10+1$ eval.)
+    \State $\Delta\bm{\beta} \gets \text{lstsq}(J_k,\;\bm{t}-\text{SMPL}(\bm{\beta}_k))$
+    \State Backtracking: halvar \textit{step} hasta $\|r_{\text{trial}}\| \le \|r_k\|$
+    \State $\bm{\beta}_{k+1} \gets \text{clip}(\bm{\beta}_k + \text{step}\cdot\Delta\bm{\beta},\,-3,3)$
+    \If{$\|\Delta\bm{\beta}\| < 10^{-3}$ o mejora relativa $< 10^{-4}$}
+        \State \textbf{break}
+    \EndIf
+\EndFor
+\State \Return $\bm{\beta}_k$
+\end{algorithmic}
+\end{algorithm}
+
+Los $\bm{\beta}$ ajustados se guardan en
+\texttt{internal/data/betas\_cache/\{id\}.npy}; las estadísticas de
+convergencia en \texttt{internal/logs/beta\_fit\_stats.csv}.
+
+% ============================================================
+\section{Entrenamiento WGAN-GP}
+% ============================================================
+
+\subsection{Hiperparámetros}
+
+\begin{table}[H]
+    \centering
+    \caption{Hiperparámetros de entrenamiento para ambos pipelines.}
+    \label{tab:hparams}
+    \begin{tabularx}{\textwidth}{lXX}
+        \toprule
+        \textbf{Hiperparámetro} & \textbf{Tabular (HParams)} & \textbf{Imagen (ImgHParams)} \\
+        \midrule
+        \texttt{noise\_dim}      & 64               & 128 \\
+        \texttt{batch\_size}     & 128              & 64  \\
+        \texttt{epochs}          & 3\,000           & 100 \\
+        \texttt{lr\_g = lr\_d}   & $10^{-4}$        & $10^{-4}$ \\
+        $\beta_1,\,\beta_2$      & 0.5,\;0.9        & 0.5,\;0.9 \\
+        \texttt{n\_critic}       & 5                & 5   \\
+        \texttt{lambda\_gp}      & 10.0             & 10.0 \\
+        \texttt{g\_hidden\_dims} & [256,512,1024,512,256] & — \\
+        \texttt{image\_size}     & —                & 64  \\
+        \texttt{channels}        & —                & 1 (grayscale) \\
+        \texttt{frame\_stride}   & —                & 5   \\
+        \texttt{train\_split}    & 0.8              & 0.9 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\paragraph{Justificación de $\beta_1=0.5$, $\beta_2=0.9$.}
+Los valores por defecto de Adam ($0.9$, $0.999$) introducen demasiada inercia
+para WGAN-GP. Con $\beta_1=0.5$ se reduce el momentum y el entrenamiento
+es más estable, tal como recomienda el paper de Gulrajani.
+
+\paragraph{Justificación de \texttt{n\_critic=5}.}
+El discriminador se actualiza 5 veces por cada actualización del generador.
+Esto da al crítico tiempo de adaptarse antes de que $G$ se mueva, lo que
+es crucial para que la estimación de la distancia de Wasserstein sea fiable.
+
+\subsection{Loop de Entrenamiento Tabular}
+
+Por cada batch $(\bm{c}, \bm{\beta}_{\text{real}})$ del dataset NOMO3D:
+
+\begin{lstlisting}[language=Python, caption={Loop WGAN-GP tabular (extracto de train.py)}]
+# Normalizar medidas
+meas_norm = (meas - meas_mean) / meas_std
+
+# --- n_critic=5 pasos del Discriminador ---
+for _ in range(n_critic):
+    z = torch.randn(batch, noise_dim)
+    beta_fake = G(z, meas_norm).detach()
+    d_real = D(beta_real, meas_norm)
+    d_fake = D(beta_fake, meas_norm)
+    gp = compute_gradient_penalty(beta_real, beta_fake, meas_norm)
+    L_D = -d_real.mean() + d_fake.mean() + lambda_gp * gp
+    L_D.backward(); opt_D.step()
+
+# --- 1 paso del Generador ---
+z = torch.randn(batch, noise_dim)
+beta_fake = G(z, meas_norm)
+L_G = -D(beta_fake, meas_norm).mean()
+L_G.backward(); opt_G.step()
+\end{lstlisting}
+
+\subsection{Gradient Penalty: Implementación}
+
+\begin{lstlisting}[language=Python, caption={compute\_gradient\_penalty (train.py)}]
+def compute_gradient_penalty(real, fake, cond):
+    # Interpolar entre muestras reales y falsas
+    alpha = torch.rand(real.size(0), 1, device=device)
+    x_hat = (alpha * real + (1-alpha) * fake).requires_grad_(True)
+    d_hat = D(x_hat, cond)
+    # Calcular gradiente respecto a la interpolacion
+    grads = autograd.grad(outputs=d_hat, inputs=x_hat,
+                          grad_outputs=torch.ones_like(d_hat),
+                          create_graph=True)[0]
+    grads = grads.view(grads.size(0), -1)
+    gp = ((grads.norm(2, dim=1) - 1) ** 2).mean()
+    return gp
+\end{lstlisting}
+
+Para el discriminador de imagen, \texttt{alpha} tiene forma
+$(B,1,1,1)$ en lugar de $(B,1)$, para interpolar en el espacio de imagen
+$\mathbb{R}^{1\times64\times64}$.
+
+% ============================================================
+\section{Inferencia y Resultados}
+% ============================================================
+
+\subsection{Inferencia Tabular (2D y 3D)}
+
+El proceso de inferencia tabular sigue estos pasos:
+
+\begin{enumerate}
+    \item Cargar el último checkpoint \texttt{wgangp\_ckpt\_*.pt} (por mtime).
+    \item Cargar el scaler (\texttt{meas\_scaler.npz}) del entrenamiento.
+    \item Normalizar las 10 medidas de entrada.
+    \item Generar $N=32$ muestras $\bm{z}\sim\mathcal{N}(\bm{0},\bm{I})$ en paralelo.
+    \item Pasar todas por $G$ y promediar: $\bm{\beta}^* = \frac{1}{N}\sum_{i=1}^{N}G(\bm{z}_i,\bm{c})$.
+    \item Instanciar SMPL con $\bm{\beta}^*$ y el género → vértices + caras.
+    \item Exportar como PNG (render ortográfico 2D) y/o OBJ (malla 3D).
+\end{enumerate}
+
+La estrategia de promediar $N=32$ muestras reduce la varianza de muestreo
+del espacio latente, dando una estimación más estable y representativa de la
+forma corporal condicionada a las medidas dadas.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.38\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../docs/readme/output_2d.png}
+        \caption{Salida 2D: proyección ortográfica del cuerpo generado
+        (vista frontal, femenino, 170 cm).}
+        \label{fig:out2d}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.56\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../docs/readme/output_3d.png}
+        \caption{Salida 3D: malla SMPL de 6890 vértices renderizada por el
+        visor de trimesh.}
+        \label{fig:out3d}
+    \end{subfigure}
+    \caption{Resultados del pipeline tabular (Conditional WGAN-GP + SMPL).
+    Las proporciones corporales (cintura, cadera, hombros) reflejan el vector
+    de medidas introducido como condición.}
+    \label{fig:outputs}
+\end{figure}
+
+\subsection{Salida 2D — Proyección Ortográfica}
+
+La Figura~\ref{fig:out2d} muestra un cuerpo femenino en pose-T (pose canónica
+de SMPL), vista frontal. El render 2D es un proyector ortográfico ligero
+(\texttt{src/render\_2d.py}) que no requiere OpenGL ni ventana, haciéndolo
+portátil para servidores de entrenamiento.
+
+\subsection{Salida 3D — Malla SMPL}
+
+La Figura~\ref{fig:out3d} muestra la malla 3D con sus 6890 vértices. Se
+observan las proporciones características del vector $\bm{\beta}$ generado
+por la GAN, que es diferente para cada combinación de medidas de entrada.
+
+\subsection{Grid de Imágenes TNT15}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{../docs/readme/image_gan_grid.png}
+    \caption{Grid $8\times8$ de 64 siluetas generadas por el ImgGenerator
+    (DCGAN + WGAN-GP) entrenado sobre TNT15. Se observa diversidad de poses,
+    proporciones corporales y orientaciones.}
+    \label{fig:imagegrid}
+\end{figure}
+
+La Figura~\ref{fig:imagegrid} muestra el resultado del pipeline de imagen.
+Las siluetas presentan diversidad en posturas (brazos en distintos ángulos),
+proporciones y orientaciones, lo que indica que el modelo ha aprendido la
+distribución de poses del dataset TNT15 (personas en movimiento).
+
+% ============================================================
+\section{Evaluación del Modelo}
+% ============================================================
+
+\textbf{Archivo:} \texttt{src/eval.py}
+
+La evaluación del modelo tabular usa el \textbf{Error Absoluto Medio} (MAE)
+en centímetros, calculado comparando las medidas del cuerpo generado por SMPL
+con las medidas target del split de test:
+
+\begin{equation}
+    \label{eq:mae}
+    \text{MAE}(m) = \frac{1}{N_{\text{test}}}\sum_{i=1}^{N_{\text{test}}}
+    \left|\hat{m}_i - m_i^*\right| \quad [\text{cm}]
+\end{equation}
+
+donde $\hat{m}_i$ es la medida del cuerpo generado por SMPL para la muestra
+$i$ del test, y $m_i^*$ es la medida target de NOMO3D.
+
+El proceso es:
+\begin{enumerate}
+    \item Para cada muestra del test, generar $\bm{\beta}$ con la GAN condicionada.
+    \item Instanciar SMPL y medir el cuerpo generado.
+    \item Calcular el MAE por medida y promediar sobre el test.
+\end{enumerate}
+
+El resultado es una tabla con MAE por dimensión que permite identificar qué
+medidas aprende mejor el modelo a reproducir.
+
+% ============================================================
+\section{Reflexión: Estabilidad y Modos de Fallo}
+% ============================================================
+
+\subsection{Mode Collapse}
+
+El mode collapse es el principal riesgo del entrenamiento GAN: el generador
+aprende a producir siempre el mismo output. En el pipeline tabular, se
+manifestaría como que $G$ genera siempre los mismos 10 $\bm{\beta}$ sin
+importar las medidas de condicionamiento.
+
+WGAN-GP mitiga este problema porque la distancia de Wasserstein proporciona
+gradientes útiles incluso cuando las distribuciones no se solapan. La
+penalización del gradiente asegura que el crítico sea 1-Lipschitz, lo que
+estabiliza el entrenamiento.
+
+\subsection{Gradientes Desaparecidos}
+
+El uso de \texttt{LeakyReLU} (slope=0.2 en la parte negativa) evita la
+``muerte'' de neuronas durante el entrenamiento adversarial. El bloque
+residual en el generador tabular proporciona una conexión directa que
+preserva el flujo de gradientes.
+
+\subsection{Normalización de Medidas}
+
+Las 10 medidas tienen escalas muy diferentes (altura $\approx170$ cm,
+bíceps $\approx28$ cm). Sin normalizar, la altura dominaría la pérdida.
+La normalización Z-score transforma las medidas a $\mathcal{N}(0,1)$,
+equiparando el peso de cada dimensión.
+
+% ============================================================
+\section{Estructura del Repositorio}
+% ============================================================
+
+\begin{lstlisting}[language=bash, caption={Estructura del repositorio.}]
+.
+|-- main.py                  # CLI (fit/train/eval/infer/train_img/infer_img)
+|-- requirements.txt
+|-- src/
+|   |-- config/              # hparams.py, paths.py
+|   |-- data/                # dataset.py, img_dataset.py, beta_fitter.py
+|   |-- models/              # generator, discriminator, img_generator, img_discriminator
+|   |-- smpl_module_project/ # measure, evaluate, landmark/joint/measurement defs
+|   |-- train.py             # WGANGPTrainer (tabular)
+|   |-- train_img.py         # ImgWGANGPTrainer (imagen)
+|   |-- inference.py         # Inferencia tabular -> 2D/3D
+|   |-- inference_img.py     # Inferencia imagen -> PNG/grid
+|   |-- eval.py              # MAE sobre split de test
+|   `-- render_2d.py         # Proyector ortografico 2D
+|-- docs/readme/             # pipeline.png, output_2d.png, output_3d.png, image_gan_grid.png
+|-- laTex/                   # Memoria en LaTeX
+|-- notebooks/               # pipeline_completo.ipynb
+`-- internal/                # [NO versionado] datos, checkpoints, logs, salidas
+\end{lstlisting}
+
+% ============================================================
+\section{Conclusiones}
+% ============================================================
+
+El proyecto GAN Body Lab demuestra la viabilidad de aplicar técnicas de
+aprendizaje profundo generativo al dominio de la síntesis de cuerpos humanos:
+
+\paragraph{Logros principales.}
+\begin{enumerate}
+    \item Se ha implementado exitosamente una Conditional WGAN-GP que aprende
+          a mapear medidas antropométricas a parámetros $\bm{\beta}$ de SMPL.
+          La arquitectura con bloque residual en el generador y GroupNorm en el
+          discriminador es compatible con WGAN-GP.
+    \item El sistema de ajuste de $\bm{\beta}$ (Gauss-Newton con warm-start
+          lineal y backtracking) proporciona pseudo-ground-truths de calidad
+          suficiente para el entrenamiento, incluso sin diferenciabilidad de
+          la cadena de medición SMPL.
+    \item El pipeline de imagen (DCGAN + WGAN-GP sobre TNT15) genera siluetas
+          humanas diversas y plausibles, demostrando que el modelo aprende la
+          distribución de poses y proporciones del dataset.
+    \item La arquitectura modular permite que ambos pipelines coexistan y
+          evolucionen independientemente, con una CLI unificada.
+\end{enumerate}
+
+\paragraph{Relación con la teoría.}
+\begin{itemize}
+    \item El loop de entrenamiento implementa fielmente el Algoritmo~1 de
+          Goodfellow~\cite{goodfellow2014}: $k=5$ pasos del discriminador
+          seguidos de 1 paso del generador.
+    \item La pérdida WGAN-GP (Ecuación~\ref{eq:wgangp_loss}) resuelve los
+          problemas de gradientes desaparecidos y mode collapse del minimax
+          original (Ecuación~\ref{eq:minimax}).
+    \item El condicionamiento tabular implementa exactamente la arquitectura
+          cGAN de Mirza y Osindero~\cite{mirza2014}: $\bm{y}$ se concatena a
+          $\bm{z}$ en el generador y a $\bm{x}$ en el discriminador
+          (Ecuación~\ref{eq:cgan}).
+    \item La arquitectura DCGAN del generador de imagen sigue las guías de
+          Radford~\cite{radford2015}: ConvTranspose2d con stride,
+          BN+ReLU en capas ocultas, Tanh en la salida.
+\end{itemize}
+
+\paragraph{Limitaciones y trabajo futuro.}
+\begin{itemize}
+    \item El render 2D es una proyección ortográfica simple sin motor gráfico.
+          Para resultados más realistas podría integrarse Pyrender o Blender.
+    \item El pipeline de imagen es incondicional. Con un dataset más grande
+          podría implementarse un cGAN de imagen condicionado por pose o
+          identidad.
+    \item Se podrían añadir métricas generativas como FID (\textit{Fréchet
+          Inception Distance}) o IS (\textit{Inception Score}) para evaluar
+          la calidad y diversidad de las distribuciones aprendidas.
+    \item El ajuste de $\bm{\beta}$ por Gauss-Newton es costoso (21 evaluaciones
+          SMPL por iteración). Un ajuste diferenciable con \texttt{smplx} podría
+          ser más eficiente.
+\end{itemize}
+
+% ============================================================
+%  BIBLIOGRAFÍA
+% ============================================================
+\newpage
+\printbibliography[title={Referencias}]
 
 \end{document}
