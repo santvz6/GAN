@@ -1,16 +1,5 @@
-"""Tabular GAN evaluation with FID and Inception Score.
+"""Tabular GAN evaluation with FID and Inception Score."""
 
-FID (Fréchet Inception Distance) — adapted for tabular data:
-    Computes mean and covariance of real vs generated betas in the
-    raw 10-dim beta space, then applies the standard FID formula:
-        FID = ||μ_r − μ_g||² + Tr(Σ_r + Σ_g − 2·(Σ_r·Σ_g)^½)
-
-Inception Score (IS) — adapted for tabular data:
-    1. Cluster real betas with K-Means into K classes.
-    2. Train a small MLP classifier on those clusters.
-    3. Pass generated betas through the classifier → p(y|x).
-    4. IS = exp( E_x[ KL( p(y|x) || p(y) ) ] )
-"""
 import os
 import numpy as np
 import torch
