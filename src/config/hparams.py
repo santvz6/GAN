@@ -88,3 +88,47 @@ class ImgHParams:
     subjects: Tuple[str, ...] = ("mr", "pz", "sg", "sp")
     cameras: Tuple[str, ...] = ("00", "01", "02", "03", "04")
     train_split: float = 0.9
+
+
+@dataclass
+class TabHParams:
+    # Tab Transformer architecture
+    d_model: int = 64             # embedding dimension per token
+    nhead: int = 4                # attention heads
+    num_layers: int = 3           # transformer encoder layers
+    dim_feedforward: int = 128    # feedforward dim inside transformer
+
+    # Generator / Discriminator
+    noise_dim: int = 64
+    cond_dim: int = 10            # 10 measurements
+    num_betas: int = 10
+
+    # Training (WGAN-GP)
+    batch_size: int = 128
+    epochs: int = 3000
+    lr_g: float = 1e-4
+    lr_d: float = 1e-4
+    b1: float = 0.5
+    b2: float = 0.9
+    n_critic: int = 5
+    lambda_gp: float = 10.0
+
+    # Logging / checkpointing
+    checkpoint_interval: int = 500
+    sample_interval: int = 100
+    num_workers: int = 4
+
+    # Dataset
+    train_split: float = 0.8
+    meas_cols: List[str] = field(default_factory=lambda: [
+        "Head_Top_Height",
+        "BUST_Circ",
+        "NaturalWAIST_Circ",
+        "HIP_Circ",
+        "NeckBase_Circ",
+        "Shoulder_to_Shoulder",
+        "Inseam",
+        "Outseam",
+        "Thigh_Circ",
+        "Bicep_Circ"
+    ])

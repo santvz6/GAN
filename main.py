@@ -37,6 +37,9 @@ from src.eval import evaluate
 from src.inference import infer
 from src.train_img import ImgWGANGPTrainer
 from src.inference_img import infer as infer_img
+from src.train_tab import TabWGANGPTrainer
+from src.infer_tab import infer as infer_tab
+from src.eval_tab import evaluate_tab
 
 def main():
     Paths.init_project()
@@ -86,6 +89,39 @@ def main():
     parser_infer_img.add_argument("--grid", action="store_true",
                                   help="Save as a single grid PNG instead of N separate files.")
 
+    # --- Tab Transformer pipeline ---
+    subparsers.add_parser("train_tab", help="Train the Tab Transformer WGAN-GP model")
+    subparsers.add_parser("eval_tab", help="Evaluate tabular models (FID & Inception Score)")
+
+    parser_infer_tab = subparsers.add_parser(
+        "infer_tab",
+        help="Run Tab Transformer inference and generate a 2D image or 3D mesh",
+    )
+    parser_infer_tab.add_argument("--gender", type=str, default="FEMALE", choices=["MALE", "FEMALE", "NEUTRAL"])
+    parser_infer_tab.add_argument("--height", type=float, default=170.0)
+    parser_infer_tab.add_argument("--bust", type=float, default=90.0)
+    parser_infer_tab.add_argument("--waist", type=float, default=70.0)
+    parser_infer_tab.add_argument("--hip", type=float, default=95.0)
+    parser_infer_tab.add_argument("--neck", type=float, default=34.0)
+    parser_infer_tab.add_argument("--shoulder", type=float, default=40.0)
+    parser_infer_tab.add_argument("--inseam", type=float, default=80.0)
+    parser_infer_tab.add_argument("--outseam", type=float, default=100.0)
+    parser_infer_tab.add_argument("--thigh", type=float, default=55.0)
+    parser_infer_tab.add_argument("--bicep",     type=float, default=28.0)
+    parser_infer_tab.add_argument("--n_samples", type=int,   default=32,
+                                  help="z samples to average at inference")
+    parser_infer_tab.add_argument("--output", type=str, default="image",
+                                  choices=["image", "mesh", "both"],
+                                  help="Output format: 2D PNG image, 3D OBJ mesh, or both")
+    parser_infer_tab.add_argument("--view", type=str, default="front",
+                                  choices=["front", "side", "back"],
+                                  help="Camera view used for the 2D PNG render")
+    parser_infer_tab.add_argument("--image_size", type=int, default=512,
+                                  help="Output PNG size in pixels")
+    parser_infer_tab.add_argument("--wireframe", action="store_true",
+                                  help="Draw triangle edges in the 2D PNG render")
+    parser_infer_tab.add_argument("--show", action="store_true", help="Show 3D viewer")
+
     args = parser.parse_args()
 
     if args.command == "fit":
@@ -102,6 +138,13 @@ def main():
         trainer.train()
     elif args.command == "infer_img":
         infer_img(args)
+    elif args.command == "train_tab":
+        trainer = TabWGANGPTrainer()
+        trainer.train()
+    elif args.command == "eval_tab":
+        evaluate_tab()
+    elif args.command == "infer_tab":
+        infer_tab(args)
 
 if __name__ == "__main__":
     main()
