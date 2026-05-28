@@ -1,3 +1,4 @@
+"""WGAN-GP training loop for the Tab Transformer on point clouds."""
 import os
 import csv
 import datetime
@@ -12,22 +13,15 @@ from tqdm import tqdm
 
 from src.config.paths import Paths
 from src.config.hparams import TabHParams
-from src.data.dataset import NOMODataset
+from src.data.pc_dataset import PointCloudDataset
 from src.models import TabTransformerGenerator, TabTransformerDiscriminator
-
-
-# ---------------------------------------------------------------------------
-# Fixed probe measurement (FEMALE, average-ish): height, bust, waist, hip,
-# neck, shoulder, inseam, outseam, thigh, bicep  — in cm, same units as data.
-# ---------------------------------------------------------------------------
-PROBE_MEAS = [165.0, 90.0, 72.0, 97.0, 35.0, 40.0, 78.0, 100.0, 56.0, 28.0]
 
 
 class TabWGANGPTrainer:
     def __init__(self):
         Paths.init_project()
         self.hp = TabHParams()
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("mps")
 
         self.G = TabTransformerGenerator(self.hp).to(self.device)
         self.D = TabTransformerDiscriminator(self.hp).to(self.device)
@@ -35,7 +29,7 @@ class TabWGANGPTrainer:
         self.opt_G = optim.Adam(self.G.parameters(), lr=self.hp.lr_g, betas=(self.hp.b1, self.hp.b2))
         self.opt_D = optim.Adam(self.D.parameters(), lr=self.hp.lr_d, betas=(self.hp.b1, self.hp.b2))
 
-        train_ds = NOMODataset(split='train')
+        train_ds = PointCloudDataset(split='train', hparams=self.hp)
         self.dataloader = DataLoader(
             train_ds,
             batch_size=self.hp.batch_size,
@@ -46,35 +40,40 @@ class TabWGANGPTrainer:
             persistent_workers=self.hp.num_workers > 0,
         )
 
-        # --- Compute and save measurement normalisation stats ---
-        self.meas_mean, self.meas_std = self._compute_scaler(train_ds)
+        # --- Point cloud normalisation stats ---
+        self.pc_mean, self.pc_std = self._compute_pc_scaler(train_ds)
         np.savez(
-            str(Paths.SCALER_PATH),
-            mean=self.meas_mean.numpy(),
-            std=self.meas_std.numpy(),
+            str(Paths.EXPERIMENTS_DIR / "pc_scaler.npz"),
+            mean=self.pc_mean.numpy(),
+            std=self.pc_std.numpy(),
         )
-        print(f"  [SCALER] Saved -> {Paths.SCALER_PATH}")
+        print(f"  [PC SCALER] Saved -> {Paths.EXPERIMENTS_DIR / 'pc_scaler.npz'}")
 
         # --- Sample log CSV ---
         self.sample_log_path = Paths.LOGS_DIR / "tab_beta_samples.csv"
         self._init_sample_log()
 
-        # --- Fixed probe tensor (normalised, reused every sample_interval) ---
-        probe_raw = torch.tensor([PROBE_MEAS], dtype=torch.float32)
-        self._probe = self._normalise(probe_raw).to(self.device)
+        # --- Fixed probe point cloud (first training sample, reused for logging) ---
+        probe_pc, _, _ = train_ds[0]
+        self._probe_pc = self._normalise_pc(probe_pc.unsqueeze(0)).to(self.device)
 
     # ------------------------------------------------------------------
-    def _compute_scaler(self, dataset: NOMODataset):
-        """Compute mean and std of all measurements across the training split."""
-        all_meas = torch.stack([dataset.samples[i]['measurements']
-                                for i in range(len(dataset.samples))])
-        mean = all_meas.mean(dim=0)
-        std  = all_meas.std(dim=0).clamp(min=1e-6)
+    def _compute_pc_scaler(self, dataset: PointCloudDataset):
+        """Compute mean and std of point cloud coordinates across training split."""
+        all_points = []
+        for i in range(len(dataset)):
+            pc, _, _ = dataset[i]
+            all_points.append(pc)  # (n_pc_points, 3)
+        all_points = torch.stack(all_points)  # (N, n_pc_points, 3)
+        # Flatten to (N * n_pc_points, 3) for global stats
+        flat = all_points.view(-1, 3)
+        mean = flat.mean(dim=0)  # (3,)
+        std = flat.std(dim=0).clamp(min=1e-6)  # (3,)
         return mean, std
 
-    def _normalise(self, meas: torch.Tensor) -> torch.Tensor:
-        """Normalise raw cm measurements to roughly N(0,1)."""
-        return (meas - self.meas_mean) / self.meas_std
+    def _normalise_pc(self, pc: torch.Tensor) -> torch.Tensor:
+        """Normalise point cloud coordinates to roughly N(0,1)."""
+        return (pc - self.pc_mean) / self.pc_std
 
     # ------------------------------------------------------------------
     def _init_sample_log(self):
@@ -90,7 +89,7 @@ class TabWGANGPTrainer:
         self.G.eval()
         with torch.no_grad():
             z = torch.randn(1, self.hp.noise_dim, device=self.device)
-            betas = self.G(z, self._probe).cpu().numpy().flatten().tolist()
+            betas = self.G(z, self._probe_pc).cpu().numpy().flatten().tolist()
         self.G.train()
 
         with open(self.sample_log_path, "a", newline="") as f:
@@ -99,11 +98,11 @@ class TabWGANGPTrainer:
             writer.writerow([epoch, ts] + [f"{b:.6f}" for b in betas])
 
     # ------------------------------------------------------------------
-    def compute_gradient_penalty(self, real_samples, fake_samples, cond):
+    def compute_gradient_penalty(self, real_samples, fake_samples, pc):
         alpha = torch.rand(real_samples.size(0), 1, device=self.device)
         interpolates = (alpha * real_samples + (1 - alpha) * fake_samples).requires_grad_(True)
 
-        d_interpolates = self.D(interpolates, cond)
+        d_interpolates = self.D(interpolates, pc)
         fake = torch.ones(real_samples.size(0), 1, device=self.device)
 
         gradients = grad(
@@ -133,22 +132,23 @@ class TabWGANGPTrainer:
 
     # ------------------------------------------------------------------
     def train(self):
-        print(f"Training Tab Transformer on: {self.device}")
-        print(f"Batch size : {self.hp.batch_size}  |  Workers: {self.hp.num_workers}")
+        print(f"Training Tab Transformer (point cloud) on: {self.device}")
+        print(f"Batch size  : {self.hp.batch_size}  |  Workers: {self.hp.num_workers}")
+        print(f"PC points   : {self.hp.n_pc_points}")
         g_params = sum(p.numel() for p in self.G.parameters())
         d_params = sum(p.numel() for p in self.D.parameters())
-        print(f"G params   : {g_params:,}  |  D params: {d_params:,}")
-        print(f"Sample log : {self.sample_log_path}")
+        print(f"G params    : {g_params:,}  |  D params: {d_params:,}")
+        print(f"Sample log  : {self.sample_log_path}")
         print()
 
         for epoch in range(self.hp.epochs):
             g_losses = []
             d_losses = []
 
-            for i, (meas, betas, _) in enumerate(self.dataloader):
-                meas       = self._normalise(meas).to(self.device, non_blocking=True)
+            for i, (pc, betas, _) in enumerate(self.dataloader):
+                pc         = self._normalise_pc(pc).to(self.device, non_blocking=True)
                 real_betas = betas.to(self.device, non_blocking=True)
-                batch_size = meas.size(0)
+                batch_size = pc.size(0)
 
                 # ---------------------
                 #  Train Discriminator
@@ -157,12 +157,12 @@ class TabWGANGPTrainer:
                     self.opt_D.zero_grad()
 
                     z          = torch.randn(batch_size, self.hp.noise_dim, device=self.device)
-                    fake_betas = self.G(z, meas).detach()   # detach: no G grad during D step
+                    fake_betas = self.G(z, pc).detach()
 
-                    real_validity = self.D(real_betas, meas)
-                    fake_validity = self.D(fake_betas, meas)
+                    real_validity = self.D(real_betas, pc)
+                    fake_validity = self.D(fake_betas, pc)
 
-                    gp = self.compute_gradient_penalty(real_betas.data, fake_betas.data, meas)
+                    gp = self.compute_gradient_penalty(real_betas.data, fake_betas.data, pc)
                     d_loss = -torch.mean(real_validity) + torch.mean(fake_validity) + self.hp.lambda_gp * gp
                     d_loss.backward()
                     self.opt_D.step()
@@ -175,9 +175,9 @@ class TabWGANGPTrainer:
                 self.opt_G.zero_grad()
 
                 z          = torch.randn(batch_size, self.hp.noise_dim, device=self.device)
-                fake_betas = self.G(z, meas)
+                fake_betas = self.G(z, pc)
 
-                fake_validity = self.D(fake_betas, meas)
+                fake_validity = self.D(fake_betas, pc)
                 g_loss        = -torch.mean(fake_validity)
                 g_loss.backward()
                 self.opt_G.step()

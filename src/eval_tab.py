@@ -6,7 +6,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from scipy.linalg import sqrtm
-from sklearn.cluster import KMeans
 
 from src.config.paths import Paths
 from src.config.hparams import HParams, TabHParams
@@ -52,11 +51,33 @@ class _BetaClassifier(nn.Module):
         return self.net(x)
 
 
+def _kmeans_numpy(data: np.ndarray, k: int, max_iters: int = 100, seed: int = 42):
+    """Simple K-Means with numpy (avoids sklearn segfault)."""
+    rng = np.random.RandomState(seed)
+    n = data.shape[0]
+    idx = rng.choice(n, size=k, replace=False)
+    centroids = data[idx].copy()
+
+    for _ in range(max_iters):
+        # Assign each point to nearest centroid
+        dists = np.linalg.norm(data[:, None, :] - centroids[None, :, :], axis=2)
+        labels = dists.argmin(axis=1)
+        # Update centroids
+        new_centroids = np.empty_like(centroids)
+        for c in range(k):
+            members = data[labels == c]
+            new_centroids[c] = members.mean(axis=0) if len(members) > 0 else centroids[c]
+        if np.allclose(centroids, new_centroids):
+            break
+        centroids = new_centroids
+
+    return labels
+
+
 def _train_classifier(real_betas: np.ndarray, n_classes: int = 10,
                        epochs: int = 100, lr: float = 1e-3):
     """Cluster real betas with K-Means, train classifier, return model."""
-    kmeans = KMeans(n_clusters=n_classes, random_state=42, n_init=10)
-    labels = kmeans.fit_predict(real_betas)
+    labels = _kmeans_numpy(real_betas, n_classes)
 
     X = torch.tensor(real_betas, dtype=torch.float32)
     y = torch.tensor(labels, dtype=torch.long)
@@ -165,9 +186,41 @@ def evaluate_tab():
         G_tab.eval()
         print(f"\n--- Tab Transformer Generator ({latest.name}) ---")
 
+        # Generate point clouds from real betas for conditioning
+        from src.data.pc_dataset import load_smpl_data, smpl_vertices
+        # Load SMPL model
+        smpl_pkl = Paths.SMPL_DIR / "SMPL_FEMALE.pkl"
+        if not smpl_pkl.exists():
+            smpl_pkl = Paths.SMPL_DIR / "SMPL_MALE.pkl"
+        v_template, shapedirs = load_smpl_data(str(smpl_pkl))
+
+        # Subsample indices (same as training)
+        np.random.seed(0)
+        subsample_idx = np.random.choice(6890, size=hp_tab.n_pc_points, replace=False)
+        subsample_idx.sort()
+
+        # Load PC scaler
+        pc_scaler_path = Paths.EXPERIMENTS_DIR / "pc_scaler.npz"
+        if pc_scaler_path.exists():
+            pc_sc = np.load(str(pc_scaler_path))
+            pc_mean = torch.tensor(pc_sc["mean"], dtype=torch.float32).to(device)
+            pc_std = torch.tensor(pc_sc["std"], dtype=torch.float32).to(device)
+        else:
+            pc_mean = torch.zeros(3, device=device)
+            pc_std = torch.ones(3, device=device)
+
+        # Generate point clouds from test betas
+        pc_list = []
+        for i in range(n_test):
+            verts = smpl_vertices(v_template, shapedirs, real_betas[i])
+            pc = verts[subsample_idx]  # (n_pc_points, 3)
+            pc_list.append(torch.tensor(pc, dtype=torch.float32))
+        pc_tensor = torch.stack(pc_list).to(device)  # (n_test, n_pc_points, 3)
+        pc_norm = (pc_tensor - pc_mean) / pc_std
+
         with torch.no_grad():
             z = torch.randn(n_test, hp_tab.noise_dim, device=device)
-            fake_tab = G_tab(z, meas_norm).cpu().numpy()
+            fake_tab = G_tab(z, pc_norm).cpu().numpy()
 
         fid_tab = _compute_fid(real_betas, fake_tab)
         is_tab  = _compute_inception_score(clf, fake_tab)

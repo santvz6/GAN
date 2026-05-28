@@ -100,11 +100,14 @@ class TabHParams:
 
     # Generator / Discriminator
     noise_dim: int = 64
-    cond_dim: int = 10            # 10 measurements
+    cond_dim: int = 10            # 10 measurements (kept for eval_tab compat)
     num_betas: int = 10
 
+    # Point cloud
+    n_pc_points: int = 256        # subsample SMPL vertices to this many 3D points
+
     # Training (WGAN-GP)
-    batch_size: int = 128
+    batch_size: int = 32
     epochs: int = 3000
     lr_g: float = 1e-4
     lr_d: float = 1e-4

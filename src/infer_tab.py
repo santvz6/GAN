@@ -1,3 +1,8 @@
+"""Tab Transformer inference using point cloud input.
+
+Generates a SMPL template point cloud (betas=0), passes it through
+the Tab Transformer to predict betas, then renders the body.
+"""
 import os
 import argparse
 import torch
@@ -8,17 +13,17 @@ from src.config.paths import Paths
 from src.config.hparams import TabHParams
 from src.models import TabTransformerGenerator
 from src.render_2d import render_mesh_to_png
-from src.smpl_module_project.measure import MeasureBody
+from src.data.pc_dataset import load_smpl_data, smpl_vertices, _load_smpl_pkl
 
 
-def _load_scaler(device):
-    """Load mean/std saved by the trainer. Raises if not found."""
-    if not Paths.SCALER_PATH.exists():
+def _load_pc_scaler(device):
+    """Load point cloud normalisation stats."""
+    path = Paths.EXPERIMENTS_DIR / "pc_scaler.npz"
+    if not path.exists():
         raise FileNotFoundError(
-            f"Scaler not found at {Paths.SCALER_PATH}. "
-            "Run training first so the scaler gets saved."
+            f"PC scaler not found at {path}. Run train_tab first."
         )
-    data = np.load(str(Paths.SCALER_PATH))
+    data = np.load(str(path))
     mean = torch.tensor(data["mean"], dtype=torch.float32).to(device)
     std  = torch.tensor(data["std"],  dtype=torch.float32).to(device)
     return mean, std
@@ -42,49 +47,54 @@ def infer(args):
     G.eval()
     print(f"Loaded checkpoint: {latest_ckpt.name}")
 
-    # ── Build raw measurement vector ────────────────────────────────────
-    meas_dict = {
-        "Head_Top_Height":    args.height,
-        "BUST_Circ":          args.bust,
-        "NaturalWAIST_Circ":  args.waist,
-        "HIP_Circ":           args.hip,
-        "NeckBase_Circ":      args.neck,
-        "Shoulder_to_Shoulder": args.shoulder,
-        "Inseam":             args.inseam,
-        "Outseam":            args.outseam,
-        "Thigh_Circ":         args.thigh,
-        "Bicep_Circ":         args.bicep,
-    }
-    input_meas = [meas_dict[col] for col in hp.meas_cols]
-    cond_raw = torch.tensor([input_meas], dtype=torch.float32).to(device)  # (1, 10)
+    # ── Generate point cloud from SMPL template (betas=0) ───────────────
+    gender = args.gender.upper()
+    smpl_pkl = Paths.SMPL_DIR / f"SMPL_{gender}.pkl"
+    if not smpl_pkl.exists():
+        print(f"SMPL model not found: {smpl_pkl}")
+        return
 
-    # ── Normalise with training scaler ──────────────────────────────────
-    meas_mean, meas_std = _load_scaler(device)
-    cond = (cond_raw - meas_mean) / meas_std  # same transform as training
-    print(f"Normalised cond: {cond.cpu().numpy()}")
+    v_template, shapedirs = load_smpl_data(str(smpl_pkl))
+    template_betas = np.zeros(10, dtype=np.float32)
+    verts = smpl_vertices(v_template, shapedirs, template_betas)  # (6890, 3)
 
-    # ── Generate: average N z samples to suppress noise variance ────────
-    n_samples = args.n_samples  # default 32
+    # Subsample (same indices as training)
+    np.random.seed(0)
+    subsample_idx = np.random.choice(6890, size=hp.n_pc_points, replace=False)
+    subsample_idx.sort()
+    pc = verts[subsample_idx]  # (n_pc_points, 3)
+
+    print(f"Generated point cloud: {pc.shape} from SMPL template (betas=0)")
+
+    # ── Normalise point cloud ───────────────────────────────────────────
+    pc_mean, pc_std = _load_pc_scaler(device)
+    pc_tensor = torch.tensor(pc, dtype=torch.float32).unsqueeze(0).to(device)
+    pc_norm = (pc_tensor - pc_mean) / pc_std
+
+    # ── Generate betas: average N z samples ─────────────────────────────
+    n_samples = args.n_samples
     with torch.no_grad():
-        z_batch  = torch.randn(n_samples, hp.noise_dim, device=device)
-        cond_rep = cond.expand(n_samples, -1)           # (N, 10)
-        betas_batch = G(z_batch, cond_rep)               # (N, 10)
-        fake_betas  = betas_batch.mean(dim=0, keepdim=True).cpu()  # (1, 10)
+        z_batch = torch.randn(n_samples, hp.noise_dim, device=device)
+        pc_rep = pc_norm.expand(n_samples, -1, -1)       # (N, n_pc_points, 3)
+        betas_batch = G(z_batch, pc_rep)                   # (N, 10)
+        fake_betas = betas_batch.mean(dim=0, keepdim=True).cpu()  # (1, 10)
 
     print(f"Generated betas (avg of {n_samples}): {fake_betas.numpy()}")
 
-    # ── Render with SMPL ────────────────────────────────────────────────
-    measurer = MeasureBody("smpl", model_root=str(Paths.DATA_DIR))
-    measurer.from_body_model(gender=args.gender.upper(), shape=fake_betas)
+    # ── Render body from generated betas ────────────────────────────────
+    gen_betas = fake_betas.numpy().flatten()
+    gen_verts = smpl_vertices(v_template, shapedirs, gen_betas)
 
-    verts = measurer.verts
-    faces = measurer.faces
+    # Load faces from SMPL
+    smpl_data = _load_smpl_pkl(str(smpl_pkl))
+    faces = np.array(smpl_data['f'], dtype=np.int64)
+
     output_mode = getattr(args, "output", "image")
     output_stem = f"tab_generated_{args.gender}_{args.height:g}"
     mesh = None
 
     if output_mode in ("mesh", "both"):
-        mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+        mesh = trimesh.Trimesh(vertices=gen_verts, faces=faces, process=False)
         output_path = Paths.TEMP_DIR / f"{output_stem}.obj"
         mesh.export(output_path)
         print(f"Mesh saved to {output_path}")
@@ -94,7 +104,7 @@ def infer(args):
         view = getattr(args, "view", "front")
         image_path = Paths.TEMP_DIR / f"{output_stem}_{view}.png"
         render_mesh_to_png(
-            verts=verts,
+            verts=gen_verts,
             faces=faces,
             output_path=image_path,
             image_size=image_size,
@@ -105,13 +115,13 @@ def infer(args):
 
     if args.show:
         if mesh is None:
-            mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+            mesh = trimesh.Trimesh(vertices=gen_verts, faces=faces, process=False)
         mesh.show()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Generate SMPL body from Tab Transformer model."
+        description="Generate SMPL body from Tab Transformer (point cloud) model."
     )
     parser.add_argument("--gender",    type=str,   default="FEMALE",
                         choices=["MALE", "FEMALE", "NEUTRAL"])
