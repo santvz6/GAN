@@ -152,19 +152,23 @@ que este proyecto propone es afirmativa, y se apoya en el uso de
 \textbf{Redes Generativas Adversariales} (GANs) condicionadas por las medidas
 de entrada.
 
-El proyecto implementa dos pipelines complementarios e independientes:
+El proyecto implementa tres pipelines complementarios e independientes:
 
 \begin{enumerate}[leftmargin=*, label=(\arabic*)]
-    \item \textbf{Pipeline Tabular}: aprende una correspondencia generativa entre
+    \item \textbf{Pipeline Tabular (MLP)}: aprende una correspondencia generativa entre
           medidas antropométricas y parámetros de forma del modelo SMPL
           (\textit{betas}). La salida puede exportarse como imagen 2D (PNG) o
           malla 3D (OBJ).
     \item \textbf{Pipeline de Imagen}: aprende la distribución visual de imágenes
           de cuerpos humanos segmentados del dataset TNT15, generando siluetas
           plausibles desde ruido aleatorio, sin condicionamiento explícito.
+    \item \textbf{Pipeline Tab Transformer}: una rama experimental que explora
+          el uso de un Transformer sobre nubes de puntos 3D como condición,
+          sirviendo de línea base negativa para demostrar que la representación
+          del condicionamiento importa tanto como la arquitectura.
 \end{enumerate}
 
-Ambos pipelines comparten la misma arquitectura de pérdida,
+Los tres pipelines comparten la misma arquitectura de pérdida,
 \textbf{WGAN-GP} (Wasserstein GAN con Gradient Penalty)~\cite{gulrajani2017},
 que es una de las variantes más estables del framework GAN original propuesto
 por Goodfellow et al.\ en 2014~\cite{goodfellow2014}.
@@ -422,9 +426,9 @@ como \texttt{lambda\_gp=10.0}).
                   title=Nota técnica: BatchNorm $\times$ WGAN-GP]
 La penalización del gradiente requiere derivar la salida del discriminador
 respecto a cada muestra individualmente. BatchNorm acopla las muestras del
-batch, lo que rompe ese supuesto. Por eso, en ambos discriminadores de este
-proyecto se usa \textbf{GroupNorm(num\_groups=1)} (equivalente a LayerNorm
-por muestra) en lugar de BatchNorm.
+batch, lo que rompe ese supuesto. Por eso, en todos los discriminadores de este
+proyecto se usa \textbf{GroupNorm(num\_groups=1)} o \textbf{LayerNorm}
+(equivalentes cuando se normaliza por muestra) en lugar de BatchNorm.
 \end{tcolorbox}
 
 % ============================================================
@@ -440,25 +444,33 @@ por muestra) en lugar de BatchNorm.
           (pseudo-ground-truth) mediante optimización Gauss-Newton no lineal.
     \item Implementar un DCGAN + WGAN-GP capaz de generar siluetas humanas
           plausibles desde ruido aleatorio usando TNT15.
+    \item Implementar un Tab Transformer condicionado por nubes de puntos
+          3D como línea base experimental, y evaluar con métricas
+          generativas (FID e Inception Score).
     \item Proveer una CLI completa (\texttt{main.py}) para entrenar, evaluar
-          e inferir con ambos pipelines.
+          e inferir con los tres pipelines.
 \end{enumerate}
 
 \subsection{Pipeline General}
 
 El sistema completo, ilustrado en la Figura~\ref{fig:pipeline}, se divide en
-dos workflows:
+tres workflows:
 
 \begin{description}
-    \item[\textbf{Workflow superior}] (Generación de malla 3D controlable):
+    \item[\textbf{Workflow 1 — MLP tabular}] (Generación de malla 3D controlable):
           Recibe medidas numéricas corporales combinadas con un vector de
           condicionamiento $Z_c$. Entra en una Conditional WGAN-GP y produce
           dos salidas: (A) malla 3D del cuerpo humano (vértices/caras, OBJ)
           y (B) proyección 2D (mapa de profundidad/siluetas, PNG).
-    \item[\textbf{Workflow inferior}] (Generación incondicional de siluetas 2D):
+    \item[\textbf{Workflow 2 — DCGAN de imagen}] (Generación incondicional de siluetas 2D):
           Recibe ruido aleatorio $Z$ que entra en una DCGAN entrenada sobre
           siluetas binarizadas del dataset TNT15, produciendo siluetas 2D
           segmentadas.
+    \item[\textbf{Workflow 3 — Tab Transformer}] (Línea base experimental):
+          Recibe una nube de 256 puntos 3D submuestreados de SMPL junto con
+          ruido latente $Z$. Un Transformer procesa los tokens geométricos
+          y genera los 10 parámetros $\bm{\beta}$ SMPL. Sirve para comparar
+          el efecto de la representación del condicionamiento frente al MLP.
 \end{description}
 
 % ============================================================
@@ -531,7 +543,7 @@ PNGs ya segmentados (sujeto en gris sobre fondo negro).
 \section{Arquitectura del Sistema}
 % ============================================================
 
-\subsection{Pipeline Tabular: Medidas $\to$ Cuerpo SMPL}
+\subsection{Pipeline Tabular MLP: Medidas $\to$ Cuerpo SMPL}
 
 El pipeline tabular es una Conditional GAN donde generador y discriminador
 son MLP:
@@ -556,6 +568,23 @@ El pipeline de imagen sigue DCGAN + WGAN-GP sin condicionamiento:
     \text{Entrada del discriminador:}\quad & \bm{I}\in\mathbb{R}^{1\times64\times64} \\
     \text{Salida del discriminador:}\quad  & s\in\mathbb{R} \text{ (sin sigmoid)}
 \end{align*}
+
+\subsection{Pipeline Tab Transformer: Nube de Puntos $\to$ Cuerpo SMPL}
+
+El pipeline Tab Transformer es una Conditional GAN donde generador y
+discriminador son Transformers que procesan nubes de puntos 3D como tokens:
+
+\begin{align*}
+    \text{Entradas del generador:}\quad   & \bm{z}\in\mathbb{R}^{64},\quad
+                                             \bm{P}\in\mathbb{R}^{256\times3} \text{ (nube de puntos norm.)} \\
+    \text{Salida del generador:}\quad      & \bm{\beta}\in\mathbb{R}^{10} \text{ (shape params SMPL)} \\
+    \text{Entradas del discriminador:}\quad & \bm{\beta}\in\mathbb{R}^{10},\quad
+                                              \bm{P}\in\mathbb{R}^{256\times3} \\
+    \text{Salida del discriminador:}\quad  & s\in\mathbb{R} \text{ (score Wasserstein, sin activación)}
+\end{align*}
+
+La arquitectura detallada de este pipeline se describe en la
+Sección~\ref{sec:tab_transformer}.
 
 % ============================================================
 \section{Modelos Implementados}
@@ -867,14 +896,16 @@ proporciones y orientaciones, lo que indica que el modelo ha aprendido la
 distribución de poses del dataset TNT15 (personas en movimiento).
 
 % ============================================================
-\section{Evaluación del Modelo}
+\section{Evaluación de los Modelos}
 % ============================================================
+
+\subsection{Evaluación del Pipeline MLP Tabular (MAE)}
 
 \textbf{Archivo:} \texttt{src/eval.py}
 
-La evaluación del modelo tabular usa el \textbf{Error Absoluto Medio} (MAE)
-en centímetros, calculado comparando las medidas del cuerpo generado por SMPL
-con las medidas target del split de test:
+La evaluación del modelo MLP tabular usa el \textbf{Error Absoluto Medio}
+(MAE) en centímetros, calculado comparando las medidas del cuerpo generado
+por SMPL con las medidas target del split de test:
 
 \begin{equation}
     \label{eq:mae}
@@ -894,6 +925,13 @@ El proceso es:
 
 El resultado es una tabla con MAE por dimensión que permite identificar qué
 medidas aprende mejor el modelo a reproducir.
+
+\subsection{Evaluación del Tab Transformer (FID e IS)}
+
+La evaluación del pipeline Tab Transformer utiliza métricas generativas
+(FID e Inception Score) en lugar del MAE, ya que su condición de entrada
+no son medidas sino nubes de puntos. Los detalles de estas métricas y sus
+resultados se presentan en la Sección~\ref{sec:tab_transformer}.
 
 % ============================================================
 \section{Reflexión: Estabilidad y Modos de Fallo}
