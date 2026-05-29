@@ -152,23 +152,19 @@ que este proyecto propone es afirmativa, y se apoya en el uso de
 \textbf{Redes Generativas Adversariales} (GANs) condicionadas por las medidas
 de entrada.
 
-El proyecto implementa tres pipelines complementarios e independientes:
+El proyecto implementa dos pipelines complementarios e independientes:
 
 \begin{enumerate}[leftmargin=*, label=(\arabic*)]
-    \item \textbf{Pipeline Tabular (MLP)}: aprende una correspondencia generativa entre
+    \item \textbf{Pipeline Tabular}: aprende una correspondencia generativa entre
           medidas antropométricas y parámetros de forma del modelo SMPL
           (\textit{betas}). La salida puede exportarse como imagen 2D (PNG) o
           malla 3D (OBJ).
     \item \textbf{Pipeline de Imagen}: aprende la distribución visual de imágenes
           de cuerpos humanos segmentados del dataset TNT15, generando siluetas
           plausibles desde ruido aleatorio, sin condicionamiento explícito.
-    \item \textbf{Pipeline Tab Transformer}: una rama experimental que explora
-          el uso de un Transformer sobre nubes de puntos 3D como condición,
-          sirviendo de línea base negativa para demostrar que la representación
-          del condicionamiento importa tanto como la arquitectura.
 \end{enumerate}
 
-Los tres pipelines comparten la misma arquitectura de pérdida,
+Ambos pipelines comparten la misma arquitectura de pérdida,
 \textbf{WGAN-GP} (Wasserstein GAN con Gradient Penalty)~\cite{gulrajani2017},
 que es una de las variantes más estables del framework GAN original propuesto
 por Goodfellow et al.\ en 2014~\cite{goodfellow2014}.
@@ -426,9 +422,9 @@ como \texttt{lambda\_gp=10.0}).
                   title=Nota técnica: BatchNorm $\times$ WGAN-GP]
 La penalización del gradiente requiere derivar la salida del discriminador
 respecto a cada muestra individualmente. BatchNorm acopla las muestras del
-batch, lo que rompe ese supuesto. Por eso, en todos los discriminadores de este
-proyecto se usa \textbf{GroupNorm(num\_groups=1)} o \textbf{LayerNorm}
-(equivalentes cuando se normaliza por muestra) en lugar de BatchNorm.
+batch, lo que rompe ese supuesto. Por eso, en ambos discriminadores de este
+proyecto se usa \textbf{GroupNorm(num\_groups=1)} (equivalente a LayerNorm
+por muestra) en lugar de BatchNorm.
 \end{tcolorbox}
 
 % ============================================================
@@ -444,33 +440,25 @@ proyecto se usa \textbf{GroupNorm(num\_groups=1)} o \textbf{LayerNorm}
           (pseudo-ground-truth) mediante optimización Gauss-Newton no lineal.
     \item Implementar un DCGAN + WGAN-GP capaz de generar siluetas humanas
           plausibles desde ruido aleatorio usando TNT15.
-    \item Implementar un Tab Transformer condicionado por nubes de puntos
-          3D como línea base experimental, y evaluar con métricas
-          generativas (FID e Inception Score).
     \item Proveer una CLI completa (\texttt{main.py}) para entrenar, evaluar
-          e inferir con los tres pipelines.
+          e inferir con ambos pipelines.
 \end{enumerate}
 
 \subsection{Pipeline General}
 
 El sistema completo, ilustrado en la Figura~\ref{fig:pipeline}, se divide en
-tres workflows:
+dos workflows:
 
 \begin{description}
-    \item[\textbf{Workflow 1 — MLP tabular}] (Generación de malla 3D controlable):
+    \item[\textbf{Workflow superior}] (Generación de malla 3D controlable):
           Recibe medidas numéricas corporales combinadas con un vector de
           condicionamiento $Z_c$. Entra en una Conditional WGAN-GP y produce
           dos salidas: (A) malla 3D del cuerpo humano (vértices/caras, OBJ)
           y (B) proyección 2D (mapa de profundidad/siluetas, PNG).
-    \item[\textbf{Workflow 2 — DCGAN de imagen}] (Generación incondicional de siluetas 2D):
+    \item[\textbf{Workflow inferior}] (Generación incondicional de siluetas 2D):
           Recibe ruido aleatorio $Z$ que entra en una DCGAN entrenada sobre
           siluetas binarizadas del dataset TNT15, produciendo siluetas 2D
           segmentadas.
-    \item[\textbf{Workflow 3 — Tab Transformer}] (Línea base experimental):
-          Recibe una nube de 256 puntos 3D submuestreados de SMPL junto con
-          ruido latente $Z$. Un Transformer procesa los tokens geométricos
-          y genera los 10 parámetros $\bm{\beta}$ SMPL. Sirve para comparar
-          el efecto de la representación del condicionamiento frente al MLP.
 \end{description}
 
 % ============================================================
@@ -543,7 +531,7 @@ PNGs ya segmentados (sujeto en gris sobre fondo negro).
 \section{Arquitectura del Sistema}
 % ============================================================
 
-\subsection{Pipeline Tabular MLP: Medidas $\to$ Cuerpo SMPL}
+\subsection{Pipeline Tabular: Medidas $\to$ Cuerpo SMPL}
 
 El pipeline tabular es una Conditional GAN donde generador y discriminador
 son MLP:
@@ -568,23 +556,6 @@ El pipeline de imagen sigue DCGAN + WGAN-GP sin condicionamiento:
     \text{Entrada del discriminador:}\quad & \bm{I}\in\mathbb{R}^{1\times64\times64} \\
     \text{Salida del discriminador:}\quad  & s\in\mathbb{R} \text{ (sin sigmoid)}
 \end{align*}
-
-\subsection{Pipeline Tab Transformer: Nube de Puntos $\to$ Cuerpo SMPL}
-
-El pipeline Tab Transformer es una Conditional GAN donde generador y
-discriminador son Transformers que procesan nubes de puntos 3D como tokens:
-
-\begin{align*}
-    \text{Entradas del generador:}\quad   & \bm{z}\in\mathbb{R}^{64},\quad
-                                             \bm{P}\in\mathbb{R}^{256\times3} \text{ (nube de puntos norm.)} \\
-    \text{Salida del generador:}\quad      & \bm{\beta}\in\mathbb{R}^{10} \text{ (shape params SMPL)} \\
-    \text{Entradas del discriminador:}\quad & \bm{\beta}\in\mathbb{R}^{10},\quad
-                                              \bm{P}\in\mathbb{R}^{256\times3} \\
-    \text{Salida del discriminador:}\quad  & s\in\mathbb{R} \text{ (score Wasserstein, sin activación)}
-\end{align*}
-
-La arquitectura detallada de este pipeline se describe en la
-Sección~\ref{sec:tab_transformer}.
 
 % ============================================================
 \section{Modelos Implementados}
@@ -896,16 +867,14 @@ proporciones y orientaciones, lo que indica que el modelo ha aprendido la
 distribución de poses del dataset TNT15 (personas en movimiento).
 
 % ============================================================
-\section{Evaluación de los Modelos}
+\section{Evaluación del Modelo}
 % ============================================================
-
-\subsection{Evaluación del Pipeline MLP Tabular (MAE)}
 
 \textbf{Archivo:} \texttt{src/eval.py}
 
-La evaluación del modelo MLP tabular usa el \textbf{Error Absoluto Medio}
-(MAE) en centímetros, calculado comparando las medidas del cuerpo generado
-por SMPL con las medidas target del split de test:
+La evaluación del modelo tabular usa el \textbf{Error Absoluto Medio} (MAE)
+en centímetros, calculado comparando las medidas del cuerpo generado por SMPL
+con las medidas target del split de test:
 
 \begin{equation}
     \label{eq:mae}
@@ -925,13 +894,6 @@ El proceso es:
 
 El resultado es una tabla con MAE por dimensión que permite identificar qué
 medidas aprende mejor el modelo a reproducir.
-
-\subsection{Evaluación del Tab Transformer (FID e IS)}
-
-La evaluación del pipeline Tab Transformer utiliza métricas generativas
-(FID e Inception Score) en lugar del MAE, ya que su condición de entrada
-no son medidas sino nubes de puntos. Los detalles de estas métricas y sus
-resultados se presentan en la Sección~\ref{sec:tab_transformer}.
 
 % ============================================================
 \section{Reflexión: Estabilidad y Modos de Fallo}
@@ -969,567 +931,31 @@ equiparando el peso de cada dimensión.
 
 \begin{lstlisting}[language=bash, caption={Estructura del repositorio.}]
 .
-|-- main.py                  # CLI (fit/train/eval/infer/train_img/infer_img
-|                            #       train_tab/eval_tab/infer_tab)
+|-- main.py                  # CLI (fit/train/eval/infer/train_img/infer_img)
 |-- requirements.txt
 |-- src/
 |   |-- config/              # hparams.py, paths.py
-|   |-- data/                # dataset.py, img_dataset.py, pc_dataset.py,
-|   |                        #   beta_fitter.py
-|   |-- models/              # generator, discriminator, img_generator,
-|   |                        #   img_discriminator, tab_generator,
-|   |                        #   tab_discriminator
+|   |-- data/                # dataset.py, img_dataset.py, beta_fitter.py
+|   |-- models/              # generator, discriminator, img_generator, img_discriminator
 |   |-- smpl_module_project/ # measure, evaluate, landmark/joint/measurement defs
-|   |-- train.py             # WGANGPTrainer (tabular MLP)
+|   |-- train.py             # WGANGPTrainer (tabular)
 |   |-- train_img.py         # ImgWGANGPTrainer (imagen)
-|   |-- train_tab.py         # TabWGANGPTrainer (Tab Transformer)
 |   |-- inference.py         # Inferencia tabular -> 2D/3D
 |   |-- inference_img.py     # Inferencia imagen -> PNG/grid
-|   |-- infer_tab.py         # Inferencia Tab Transformer -> 2D/3D
-|   |-- eval.py              # MAE sobre split de test (MLP)
-|   |-- eval_tab.py          # FID + IS comparativa (MLP vs Tab Transformer)
+|   |-- eval.py              # MAE sobre split de test
 |   `-- render_2d.py         # Proyector ortografico 2D
-|-- docs/readme/             # pipeline.png, output_2d.png, output_3d.png,
-|                            #   image_gan_grid.png
+|-- docs/readme/             # pipeline.png, output_2d.png, output_3d.png, image_gan_grid.png
 |-- laTex/                   # Memoria en LaTeX
 |-- notebooks/               # pipeline_completo.ipynb
 `-- internal/                # [NO versionado] datos, checkpoints, logs, salidas
 \end{lstlisting}
 
 % ============================================================
-\section{Pipeline Tab Transformer: Nubes de Puntos $\to$ Cuerpo SMPL}
-\label{sec:tab_transformer}
-% ============================================================
-
-Además de los dos pipelines anteriores (tabular MLP y DCGAN de imagen), el
-proyecto implementa una \textbf{tercera rama experimental} basada en un
-\textbf{Tab Transformer}~\cite{huang2020} condicionado por \emph{nubes de
-puntos 3D} extraídas del modelo SMPL. El objetivo de esta rama no es superar
-al MLP condicionado por medidas antropométricas, sino servir como
-\textbf{línea base negativa} que demuestre empíricamente que la
-\emph{representación del condicionamiento} importa tanto o más que la
-complejidad de la arquitectura.
-
-\subsection{Motivación: ¿Por qué un Transformer sobre nubes de puntos?}
-
-La hipótesis que motiva este experimento es la siguiente: el Tab Transformer
-fue diseñado por Huang et al.\ para datos tabulares, donde cada
-\emph{feature} (columna de una tabla) se trata como un token independiente y
-se procesa mediante \emph{self-attention}. En nuestro caso, se aplica
-\textbf{deliberadamente} esta arquitectura a un dominio para el que no fue
-concebida: cada punto 3D $(x,y,z)$ del cuerpo se trata como si fuera una
-columna tabular, sin codificación posicional geométrica, sin invarianza a
-rotación ni a escala, y sin noción explícita de vecindad espacial.
-
-El resultado esperado es que el Transformer tendrá que ``redescubrir'' las
-relaciones geométricas del cuerpo humano exclusivamente a partir de la
-señal de entrenamiento, algo que arquitecturas especializadas en nubes de
-puntos como PointNet~\cite{qi2017} o DGCNN~\cite{wang2019} codifican de
-forma nativa. Si el Tab Transformer obtiene peores resultados que el MLP
-condicionado por medidas, quedará demostrado que una representación compacta
-y bien diseñada (10 medidas antropométricas) es más eficaz que una
-representación de alta dimensionalidad (256 puntos $\times$ 3 coordenadas
-= 768 dimensiones) procesada por una arquitectura inadecuada.
-
-\subsection{Dataset de Nubes de Puntos}
-
-\textbf{Archivo:} \texttt{src/data/pc\_dataset.py}
-
-El dataset de nubes de puntos reutiliza los vectores $\bm{\beta}$
-pseudo-ground-truth obtenidos previamente por el ajuste Gauss-Newton
-(Algoritmo~\ref{alg:gn}), almacenados en
-\texttt{internal/data/betas\_cache/*.npy}. Para cada muestra, la generación
-de la nube de puntos sigue los pasos:
-
-\begin{enumerate}
-    \item \textbf{Carga del modelo SMPL sin chumpy}: el archivo
-          \texttt{SMPL\_FEMALE.pkl} (o \texttt{MALE}) se carga con
-          \texttt{pickle}. Dado que los \texttt{.pkl} originales del proyecto
-          SMPL contienen objetos \texttt{chumpy.Ch}, el cargador inyecta un
-          módulo \emph{stub} de chumpy en \texttt{sys.modules} que convierte
-          automáticamente los arrays de chumpy a arrays NumPy estándar. Tras
-          la carga, los stubs se eliminan de \texttt{sys.modules}. Esta
-          técnica evita instalar chumpy, que tiene incompatibilidades con
-          NumPy $\geq$ 1.24 y Python $\geq$ 3.11.
-
-    \item \textbf{Cómputo de vértices}: la forma del cuerpo se calcula
-          mediante la formulación lineal de SMPL:
-          \begin{equation}
-              \label{eq:smpl_shape}
-              \bm{V} = \bm{T} + \sum_{k=0}^{9}\beta_k\,\bm{S}_k
-          \end{equation}
-          donde $\bm{T}\in\mathbb{R}^{6890\times3}$ es el \emph{template}
-          (forma media), $\bm{S}_k\in\mathbb{R}^{6890\times3}$ es la $k$-ésima
-          dirección principal de deformación (\texttt{shapedirs}), y $\beta_k$
-          son los parámetros de forma. El resultado es una malla de
-          \textbf{6\,890 vértices} $\times$ 3 coordenadas.
-
-    \item \textbf{Submuestreo}: de los 6\,890 vértices, se seleccionan
-          $N_p = 256$ (configurable vía \texttt{TabHParams.n\_pc\_points})
-          usando una semilla fija (\texttt{np.random.seed(0)}). Los índices
-          resultantes se \emph{ordenan} para estabilidad numérica y se
-          reutilizan de forma determinista en entrenamiento, evaluación e
-          inferencia. La nube de puntos resultante tiene forma
-          $(256,\,3)$.
-
-    \item \textbf{Caché}: cada nube generada se guarda en
-          \texttt{internal/data/pc\_cache/\{id\}.npy} para evitar recomputarla
-          en cada epoch. El coste de la primera generación es despreciable
-          ($\approx$\,2~ms por muestra), pero el caché elimina la latencia
-          de I/O del \texttt{.pkl} SMPL en epochs sucesivos.
-\end{enumerate}
-
-El split train/test utiliza la \textbf{misma semilla y la misma proporción
-80\%/20\%} que el \texttt{NOMODataset} tabular, garantizando que las mismas
-muestras van al conjunto de test en ambas ramas y que la comparación de
-métricas es justa.
-
-\subsubsection{Normalización de las nubes de puntos}
-
-Las coordenadas $(x,y,z)$ de los vértices SMPL están en metros y tienen
-escalas y offsets muy diferentes por eje (por ejemplo, la coordenada $y$
-es predominantemente positiva, con rango $\approx[0,\,1.8]$, mientras que
-$x$ y $z$ oscilan simétricamente alrededor de cero). Sin normalizar, las
-activaciones del Transformer estarían sesgadas y el aprendizaje sería
-ineficiente.
-
-Se aplica una \textbf{normalización Z-score por eje}, calculada sobre
-\emph{todos los puntos del split de entrenamiento}:
-\begin{equation}
-    \hat{p}_{ij} = \frac{p_{ij} - \mu_j}{\sigma_j}, \quad j \in \{x,y,z\}
-\end{equation}
-donde $\mu_j$ y $\sigma_j$ son la media y desviación típica del eje $j$
-sobre el conjunto de entrenamiento. Las estadísticas se guardan en
-\texttt{internal/experiments/pc\_scaler.npz} y se reutilizan durante la
-evaluación y la inferencia, de forma análoga al \texttt{meas\_scaler.npz}
-del pipeline MLP.
-
-\subsection{Generador Tab Transformer}
-
-\textbf{Archivo:} \texttt{src/models/tab\_generator.py}
-
-El generador recibe dos entradas: un vector de ruido
-$\bm{z}\in\mathbb{R}^{64}$ y una nube de puntos
-$\bm{P}\in\mathbb{R}^{256\times3}$ (condición). El flujo de datos se
-descompone en cinco etapas:
-
-\begin{enumerate}
-    \item \textbf{Embedding de puntos}: cada punto 3D $(x,y,z)$ se proyecta
-          a un token de dimensión $d=64$ mediante:
-          \[
-            \texttt{Linear}(3 \to 64) \;\to\; \texttt{LayerNorm}(64)
-            \;\to\; \texttt{LeakyReLU}(0.2)
-          \]
-          Esto produce una secuencia de 256 tokens de dimensión 64:
-          $\bm{T}_p \in \mathbb{R}^{B \times 256 \times 64}$.
-
-    \item \textbf{Inyección de ruido}: el vector $\bm{z}$ se proyecta
-          a $256 \times 64 = 16\,384$ dimensiones y se remodela a
-          $(B, 256, 64)$:
-          \[
-            \texttt{Linear}(64 \to 16384) \;\to\; \texttt{LayerNorm}
-            \;\to\; \texttt{LeakyReLU}(0.2) \;\to\; \texttt{reshape}
-          \]
-          Los tokens de ruido se \textbf{suman} (no concatenan) a los tokens
-          de punto: $\bm{T} = \bm{T}_p + \bm{T}_z$. La suma mantiene la
-          dimensión constante y actúa como una perturbación estocástica sobre
-          la representación geométrica, inyectando diversidad sin duplicar
-          el número de tokens.
-
-    \item \textbf{Encoding posicional aprendible}: se suma un tensor
-          $\bm{E} \in \mathbb{R}^{1 \times 256 \times 64}$, inicializado
-          con $\mathcal{N}(0, 0.02)$, que permite al Transformer distinguir
-          la posición ordinal de cada punto en la secuencia.
-
-    \item \textbf{Transformer Encoder}: 3 capas de
-          \texttt{TransformerEncoderLayer} con los siguientes hiperparámetros:
-
-          \begin{table}[H]
-              \centering
-              \caption{Configuración del Transformer Encoder
-                       (generador Tab Transformer).}
-              \label{tab:tabgen_transformer}
-              \begin{tabular}{@{}ll@{}}
-                  \toprule
-                  \textbf{Parámetro} & \textbf{Valor} \\
-                  \midrule
-                  \texttt{d\_model}         & 64 \\
-                  \texttt{nhead}            & 4 (dim por cabeza = 16) \\
-                  \texttt{num\_layers}      & 3 \\
-                  \texttt{dim\_feedforward}  & 128 \\
-                  Activación               & GELU \\
-                  Dropout                  & 0.1 \\
-                  Normalización            & pre-layer (\texttt{norm\_first=True}) \\
-                  \texttt{batch\_first}     & True \\
-                  \bottomrule
-              \end{tabular}
-          \end{table}
-
-          Cada capa aplica \emph{self-attention} sobre los 256 tokens,
-          permitiendo que cada punto ``vea'' la geometría global del
-          cuerpo a través de las puntuaciones de atención.
-
-    \item \textbf{Cabeza de salida}: \emph{mean-pooling} sobre la dimensión
-          temporal de los 256 tokens, seguido de:
-          \[
-            \texttt{LayerNorm}(64) \;\to\; \texttt{Linear}(64 \to 10)
-          \]
-          El vector resultante $\bm{\beta} \in \mathbb{R}^{10}$ son los
-          parámetros de forma SMPL predichos, \textbf{sin activación final}
-          (los betas SMPL pueden tomar valores en $\mathbb{R}$, aunque en
-          la práctica se limitan al rango $[-3, 3]$).
-\end{enumerate}
-
-La inicialización de pesos usa \textbf{Kaiming Normal} con pendiente
-$a=0.2$ (consistente con LeakyReLU) y sesgo inicializado a cero. El número
-total de parámetros es del orden de $\sim$150\,K, significativamente menor
-que el generador MLP ($\sim$1.5\,M) gracias a la reutilización de pesos
-en las capas de atención.
-
-\subsection{Discriminador Tab Transformer}
-
-\textbf{Archivo:} \texttt{src/models/tab\_discriminator.py}
-
-El discriminador recibe los betas (reales o generados) junto con la nube
-de puntos condicionante, y produce un escalar (sin sigmoid, por ser WGAN).
-Su arquitectura presenta una diferencia conceptual clave respecto al
-generador: los betas se tratan como \textbf{tokens individuales con
-embeddings separados por posición}.
-
-\begin{enumerate}
-    \item \textbf{Embedding de betas}: cada uno de los 10 parámetros
-          $\beta_k$ se trata como un token independiente con su propia
-          capa de proyección:
-          \[
-            \beta_k \in \mathbb{R}
-            \;\xrightarrow{\text{Lin}_k(1 \to 64)}\;
-            \texttt{LayerNorm}(64)
-            \;\to\; \texttt{LeakyReLU}(0.2)
-          \]
-          Usar una \texttt{ModuleList} de 10 capas \emph{independientes}
-          (en lugar de una capa compartida) es el rasgo distintivo del
-          Tab Transformer frente a un embedding compartido: cada ``columna''
-          ($\beta_0, \beta_1, \ldots, \beta_9$) aprende su propia
-          representación, capturando la semántica diferente de cada
-          componente principal de deformación SMPL.
-
-    \item \textbf{Embedding de puntos}: igual que en el generador,
-          cada punto 3D se proyecta a un token de dimensión 64 mediante
-          una capa \texttt{Linear(3, 64)} compartida.
-
-    \item \textbf{Concatenación}: los 10 tokens de beta y los 256 tokens
-          de punto se concatenan en una secuencia de \textbf{266 tokens}
-          de dimensión 64:
-          $\bm{T} \in \mathbb{R}^{B \times 266 \times 64}$.
-
-    \item \textbf{Encoding posicional + Transformer}: mismo esquema que el
-          generador (3 capas, 4 cabezas, GELU, pre-norm), pero con una
-          secuencia de 266 tokens en lugar de 256.
-
-    \item \textbf{Cabeza de salida}: mean-pool sobre los 266 tokens,
-          seguido de $\texttt{LayerNorm}(64) \to \texttt{Linear}(64 \to 1)$.
-\end{enumerate}
-
-\begin{tcolorbox}[colback=orange!5!white, colframe=orange!60!black,
-                  title=Nota técnica: ausencia de BatchNorm]
-El discriminador Tab Transformer \textbf{no usa BatchNorm en ningún punto},
-por las mismas razones que el discriminador de imagen (§6.4): el gradient
-penalty de WGAN-GP requiere independencia entre muestras del batch para
-calcular correctamente $\|\nabla_{\hat{\bm{x}}} D(\hat{\bm{x}})\|_2$.
-BatchNorm acopla las estadísticas del batch, violando este supuesto. Las
-capas \texttt{LayerNorm} integradas en los bloques Transformer y en los
-embeddings normalizan por muestra individual, respetando la independencia.
-\end{tcolorbox}
-
-\subsection{Hiperparámetros del Tab Transformer}
-
-\begin{table}[H]
-    \centering
-    \caption{Hiperparámetros de entrenamiento del pipeline Tab Transformer,
-             comparados con el pipeline MLP tabular.}
-    \label{tab:tab_hparams}
-    \begin{tabularx}{\textwidth}{lXX}
-        \toprule
-        \textbf{Hiperparámetro} & \textbf{MLP (HParams)} & \textbf{Tab Transformer (TabHParams)} \\
-        \midrule
-        \texttt{noise\_dim}      & 64              & 64 \\
-        Condición de entrada     & 10 medidas (cm) & 256 puntos 3D \\
-        \texttt{batch\_size}     & 128             & 32 \\
-        \texttt{epochs}          & 3\,000          & 3\,000 \\
-        \texttt{lr\_g = lr\_d}   & $10^{-4}$       & $10^{-4}$ \\
-        $\beta_1,\,\beta_2$      & 0.5,\;0.9       & 0.5,\;0.9 \\
-        \texttt{n\_critic}       & 5               & 5 \\
-        \texttt{lambda\_gp}      & 10.0            & 10.0 \\
-        \texttt{d\_model}        & —               & 64 \\
-        \texttt{nhead}           & —               & 4 \\
-        \texttt{num\_layers}     & —               & 3 \\
-        \texttt{dim\_feedforward} & —              & 128 \\
-        \texttt{n\_pc\_points}   & —               & 256 \\
-        \texttt{train\_split}    & 0.8             & 0.8 \\
-        Prefijo de checkpoint    & \texttt{wgangp\_ckpt\_*} & \texttt{wgangp\_tab\_ckpt\_*} \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-\paragraph{Justificación de \texttt{batch\_size=32}.}
-El batch size del Tab Transformer (32) es cuatro veces menor que el del MLP
-(128). Esto se debe al mayor coste por muestra del mecanismo de self-attention:
-con 256 tokens, la complejidad de la atención es $\mathcal{O}(N^2 \cdot d)
-= \mathcal{O}(256^2 \cdot 64) \approx 4.2\,\text{M}$ operaciones por capa
-por muestra, frente a las $\sim$500\,K operaciones del forward MLP. Un batch
-mayor agotaría la memoria GPU o ralentizaría excesivamente cada iteración.
-
-\subsection{Bucle de Entrenamiento}
-
-\textbf{Archivo:} \texttt{src/train\_tab.py}
-
-El trainer \texttt{TabWGANGPTrainer} sigue el patrón WGAN-GP ya establecido
-en los otros pipelines, con tres particularidades relevantes:
-
-\paragraph{Gradient penalty condicionado.}
-La interpolación $\alpha \sim \mathcal{U}[0,1]$ se aplica \textbf{únicamente
-sobre los betas}, no sobre la nube de puntos (que es la condición fija):
-\begin{equation}
-    \hat{\bm{\beta}} = \alpha\,\bm{\beta}_{\text{real}}
-    + (1-\alpha)\,\bm{\beta}_{\text{fake}},
-    \qquad \alpha \sim \mathcal{U}[0,1]
-\end{equation}
-El discriminador recibe $(\hat{\bm{\beta}},\,\bm{P})$ y los gradientes se
-toman respecto a $\hat{\bm{\beta}}$ solamente. Esta formulación es coherente
-con la definición de WGAN-GP: el crítico debe ser Lipschitz respecto a los
-\emph{datos} ($\bm{\beta}$), no respecto a la \emph{condición} ($\bm{P}$).
-
-\paragraph{Normalización on-the-fly.}
-Cada batch de nubes de puntos se normaliza usando $\mu_j$ y $\sigma_j$
-calculados al inicio del entrenamiento sobre todo el split de training.
-
-\paragraph{Log de muestras generadas.}
-Cada 100 epochs, se genera un vector de betas usando la primera nube de
-puntos del training set (\texttt{\_probe\_pc}) con ruido aleatorio fresco,
-y se escribe en un CSV (\texttt{internal/logs/tab\_beta\_samples.csv}).
-Esto permite trazar la evolución temporal de los betas generados y
-detectar posibles colapsos de modos durante el entrenamiento.
-
-\subsection{Evaluación: FID e Inception Score Tabulares}
-
-\textbf{Archivo:} \texttt{src/eval\_tab.py}
-
-La evaluación del Tab Transformer emplea dos métricas generativas
-adaptadas al dominio tabular, que permiten comparar cuantitativamente
-la calidad y diversidad de los betas generados.
-
-\subsubsection{FID Tabular (Fréchet Inception Distance)}
-
-En el contexto de generación de imágenes, el FID se calcula sobre
-\emph{features} extraídas por una red InceptionV3 pre-entrenada. En nuestro
-caso, los ``datos'' ya son vectores de baja dimensión
-($\bm{\beta}\in\mathbb{R}^{10}$), por lo que el FID se calcula
-\textbf{directamente sobre los vectores de betas}, sin necesidad de un
-extractor de features intermedio.
-
-Se modelan las distribuciones de betas reales y generados como
-gaussianas multivariantes $\mathcal{N}(\bm{\mu}_r, \bm{\Sigma}_r)$ y
-$\mathcal{N}(\bm{\mu}_g, \bm{\Sigma}_g)$, y se aplica la fórmula de la
-distancia de Fréchet:
-
-\begin{equation}
-    \label{eq:fid}
-    \text{FID} = \|\bm{\mu}_r - \bm{\mu}_g\|^2_2
-    + \text{Tr}\!\left(\bm{\Sigma}_r + \bm{\Sigma}_g
-    - 2\left(\bm{\Sigma}_r\,\bm{\Sigma}_g\right)^{1/2}\right)
-\end{equation}
-
-La raíz cuadrada de la matriz $\bm{\Sigma}_r\,\bm{\Sigma}_g$ se calcula
-mediante \texttt{scipy.linalg.sqrtm}, con eliminación de la parte
-imaginaria residual para estabilidad numérica. Un \textbf{FID bajo}
-indica que la distribución generada se asemeja a la distribución real.
-Para datos de 10 dimensiones, valores por debajo de $\sim$10 se
-consideran buenos; por encima de 50, la discrepancia es significativa.
-
-\subsubsection{Inception Score Tabular}
-
-El Inception Score (IS) mide simultáneamente la \emph{calidad} (cada muestra
-se clasifica con alta confianza) y la \emph{diversidad} (las muestras se
-reparten entre muchas clases) de las muestras generadas. En generación de
-imágenes, se usa un clasificador InceptionV3 pre-entrenado; en nuestro
-dominio tabular, \textbf{no existe tal clasificador}, por lo que se entrena
-uno \emph{ad hoc}:
-
-\begin{enumerate}
-    \item \textbf{Clustering}: los betas reales del split de test se
-          agrupan en $K$ clusters mediante K-Means (implementado con
-          NumPy puro, sin scikit-learn, para evitar segfaults observados
-          en el entorno de desarrollo). El número de clusters es adaptativo:
-          $K = \min(10, \max(2, \lfloor N_{\text{test}} / 5 \rfloor))$.
-
-    \item \textbf{Clasificador}: se entrena un MLP pequeño
-          ($10 \to 64 \to 32 \to K$) con ReLU y CrossEntropyLoss sobre
-          los betas reales etiquetados por su cluster, durante 100 epochs.
-
-    \item \textbf{Cálculo del IS}: se pasan los betas \emph{generados}
-          por el clasificador para obtener la distribución condicional
-          $p(y|\bm{x})$, y se calcula:
-          \begin{equation}
-              \label{eq:is}
-              \text{IS} = \exp\!\left(\mathbb{E}_{\bm{x}}\left[
-              D_{\text{KL}}\!\left(p(y|\bm{x})\;\|\;p(y)\right)
-              \right]\right)
-          \end{equation}
-          donde $p(y) = \mathbb{E}_{\bm{x}}[p(y|\bm{x})]$ es la distribución
-          marginal. Un \textbf{IS alto} (máximo teórico $= K$) indica muestras
-          diversas y de alta calidad; un IS cercano a 1 indica colapso de
-          modos o baja calidad.
-\end{enumerate}
-
-\subsection{Resultados Experimentales}
-
-Tras entrenar el Tab Transformer durante 3\,000 epochs con WGAN-GP
-(checkpoint \texttt{wgangp\_tab\_ckpt\_2999.pt}), se obtuvieron los
-siguientes resultados:
-
-\begin{table}[H]
-    \centering
-    \caption{Resultados de evaluación del Tab Transformer. Un FID bajo y un IS
-             alto indicarían buena calidad generativa.}
-    \label{tab:tab_results}
-    \begin{tabular}{@{}lcc@{}}
-        \toprule
-        \textbf{Modelo} & \textbf{FID} $\downarrow$ & \textbf{IS} $\uparrow$ \\
-        \midrule
-        Tab Transformer (nube de puntos) & 54.31 & 1.54 \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-\subsubsection{Análisis del FID}
-
-El \textbf{FID de 54.31} indica que la distribución de betas generada por
-el Tab Transformer difiere significativamente de la distribución de betas
-reales. Para un espacio de solo 10 dimensiones, este valor es alto: un
-generador que reprodujera fielmente la distribución real esperaría un FID
-por debajo de 10. El desajuste se manifiesta principalmente en las
-componentes de mayor varianza de los betas (aquellas que controlan la
-estatura y la complexión general), donde el generador tiende a producir
-valores concentrados alrededor de la media, ignorando las colas de la
-distribución.
-
-\subsubsection{Análisis del Inception Score}
-
-El \textbf{IS de 1.54} (sobre un máximo teórico de $K$ clusters,
-típicamente 7--10 en nuestro dataset) confirma que las muestras generadas
-tienen baja diversidad: en lugar de repartirse entre los distintos clusters
-de morfologías corporales, se concentran en unos pocos, lo que sugiere
-\textbf{colapso de modos parcial}. En la práctica, esto significa que el
-generador Tab Transformer produce cuerpos con formas muy similares
-independientemente de la variabilidad de las nubes de puntos de entrada.
-
-\subsubsection{Interpretación y comparación con el MLP}
-
-Los resultados son coherentes con la \textbf{hipótesis de partida}: el Tab
-Transformer \emph{no es la arquitectura adecuada para datos geométricos 3D}.
-Las razones fundamentales son:
-
-\begin{itemize}
-    \item \textbf{Ausencia de inductive bias geométrico}: el self-attention
-          del Transformer trata todos los tokens por igual (módulo el
-          encoding posicional aprendible), sin noción de distancia
-          euclidiana entre puntos. Dos puntos que están anatómicamente
-          cerca (por ejemplo, rodilla izquierda y rodilla derecha) no
-          reciben ningún trato preferente respecto a puntos distantes
-          (por ejemplo, rodilla y cabeza).
-
-    \item \textbf{Dimensionalidad del condicionamiento}: la nube de
-          puntos tiene $256 \times 3 = 768$ dimensiones de entrada,
-          frente a las 10 medidas del MLP. Esta alta dimensionalidad,
-          combinada con la falta de estructura espacial, dificulta que
-          el generador extraiga las relaciones relevantes para predecir
-          los 10 betas.
-
-    \item \textbf{Invarianzas no codificadas}: el Tab Transformer no es
-          invariante a permutación de puntos (depende del encoding
-          posicional fijo), ni a rotación, ni a escala de la nube.
-          Arquitecturas como PointNet resuelven esto con max-pooling
-          simétrico y T-Nets para alineación espacial.
-\end{itemize}
-
-El resultado sirve como \textbf{línea base negativa} que justifica que la
-\emph{representación de la condición} importa: el MLP condicionado por
-medidas antropométricas, a pesar de usar una arquitectura más simple,
-trabaja sobre una representación más informativa y compacta del cuerpo
-humano.
-
-\subsection{Inferencia del Tab Transformer}
-
-\textbf{Archivo:} \texttt{src/infer\_tab.py}
-
-La inferencia del Tab Transformer tiene un flujo distinto al del MLP porque
-necesita \emph{fabricar} una nube de puntos de entrada, dado que en
-inferencia no se dispone de betas reales para generar la nube:
-
-\begin{enumerate}
-    \item Se genera un \textbf{cuerpo SMPL plantilla} con $\bm{\beta}=\bm{0}$
-          (la forma media) usando el modelo SMPL del género especificado.
-    \item Se submuestrean los \textbf{mismos 256 vértices} (misma semilla y
-          mismos índices que en entrenamiento).
-    \item Se normaliza la nube con el \texttt{pc\_scaler.npz} guardado
-          durante el training.
-    \item Se generan $N=32$ vectores de ruido, se pasa cada uno junto con la
-          nube a través del generador, y se \textbf{promedian los betas
-          resultantes}: $\bm{\beta}^* = \frac{1}{N}\sum_{i=1}^{N}
-          G(\bm{z}_i,\,\hat{\bm{P}})$.
-    \item Con los betas generados se recomputan los vértices SMPL
-          (Ecuación~\ref{eq:smpl_shape}) y se exporta como PNG
-          (render ortográfico 2D) y/o malla OBJ 3D.
-\end{enumerate}
-
-\subsection{Integración en la CLI}
-
-El Tab Transformer añade tres subcomandos a la interfaz de línea de
-comandos:
-
-\begin{lstlisting}[language=bash, caption={Subcomandos del Tab Transformer.}]
-python main.py train_tab                        # Entrenar WGAN-GP Tab Transformer
-python main.py eval_tab                         # Evaluar FID e IS (MLP vs Tab)
-python main.py infer_tab --gender FEMALE --show # Generar cuerpo y visualizar
-\end{lstlisting}
-
-Los tres subcomandos coexisten con los del pipeline MLP (\texttt{fit},
-\texttt{train}, \texttt{eval}, \texttt{infer}) y los de imagen
-(\texttt{train\_img}, \texttt{infer\_img}) sin interferencia, ya que cada
-pipeline usa su propio prefijo de checkpoint y sus propios directorios de
-caché.
-
-\subsection{Lo que deliberadamente no hace este diseño}
-
-Conviene explicitar qué decisiones se tomaron y por qué, para evitar que
-parezcan omisiones involuntarias:
-
-\begin{itemize}
-    \item \textbf{No usa PointNet ni DGCNN}: el objetivo del experimento
-          era demostrar la limitación del Tab Transformer sobre datos
-          geométricos, no competir con arquitecturas especializadas en
-          nubes de puntos. Implementar PointNet habría oscurecido la
-          comparación.
-
-    \item \textbf{No condiciona por medidas antropométricas}: a diferencia
-          del MLP, el Tab Transformer recibe la nube de puntos directamente.
-          Si se quisiera combinar ambas condiciones, bastaría con añadir los
-          tokens de medidas a la secuencia de entrada del Transformer.
-
-    \item \textbf{No aplica data augmentation geométrica} (rotaciones
-          aleatorias, jitter de coordenadas): estas técnicas podrían mejorar
-          la robustez del modelo, pero oscurecerían la comparación con el
-          MLP, que tampoco las aplica.
-\end{itemize}
-
-% ============================================================
 \section{Conclusiones}
 % ============================================================
 
 El proyecto GAN Body Lab demuestra la viabilidad de aplicar técnicas de
-aprendizaje profundo generativo al dominio de la síntesis de cuerpos humanos,
-y evidencia que la elección de la representación del condicionamiento es
-tan determinante como la complejidad de la arquitectura:
+aprendizaje profundo generativo al dominio de la síntesis de cuerpos humanos:
 
 \paragraph{Logros principales.}
 \begin{enumerate}
@@ -1544,14 +970,7 @@ tan determinante como la complejidad de la arquitectura:
     \item El pipeline de imagen (DCGAN + WGAN-GP sobre TNT15) genera siluetas
           humanas diversas y plausibles, demostrando que el modelo aprende la
           distribución de poses y proporciones del dataset.
-    \item El pipeline Tab Transformer (§\ref{sec:tab_transformer}), diseñado
-          como línea base negativa, confirma que una arquitectura de atención
-          aplicada ingenuamente sobre nubes de puntos 3D
-          (FID~$= 54.31$, IS~$= 1.54$) es significativamente inferior al
-          MLP condicionado por medidas antropométricas. Este resultado valida
-          empíricamente que la \emph{representación del condicionamiento} es
-          un factor crítico en la calidad generativa.
-    \item La arquitectura modular permite que los tres pipelines coexistan y
+    \item La arquitectura modular permite que ambos pipelines coexistan y
           evolucionen independientemente, con una CLI unificada.
 \end{enumerate}
 
@@ -1570,10 +989,6 @@ tan determinante como la complejidad de la arquitectura:
     \item La arquitectura DCGAN del generador de imagen sigue las guías de
           Radford~\cite{radford2015}: ConvTranspose2d con stride,
           BN+ReLU en capas ocultas, Tanh en la salida.
-    \item El Tab Transformer aplica el paradigma de Huang et
-          al.~\cite{huang2020} a un dominio no tabular (nubes de puntos 3D),
-          demostrando experimentalmente los límites de este enfoque cuando
-          faltan los \emph{inductive biases} geométricos apropiados.
 \end{itemize}
 
 \paragraph{Limitaciones y trabajo futuro.}
@@ -1583,12 +998,9 @@ tan determinante como la complejidad de la arquitectura:
     \item El pipeline de imagen es incondicional. Con un dataset más grande
           podría implementarse un cGAN de imagen condicionado por pose o
           identidad.
-    \item El Tab Transformer podría mejorarse significativamente sustituyendo
-          la representación de entrada por una arquitectura adecuada para
-          nubes de puntos (PointNet, DGCNN) o combinando los tokens de punto
-          con las medidas antropométricas como condición conjunta.
-    \item Se podría evaluar el pipeline MLP con las mismas métricas FID e IS
-          para una comparación cuantitativa directa frente al Tab Transformer.
+    \item Se podrían añadir métricas generativas como FID (\textit{Fréchet
+          Inception Distance}) o IS (\textit{Inception Score}) para evaluar
+          la calidad y diversidad de las distribuciones aprendidas.
     \item El ajuste de $\bm{\beta}$ por Gauss-Newton es costoso (21 evaluaciones
           SMPL por iteración). Un ajuste diferenciable con \texttt{smplx} podría
           ser más eficiente.
