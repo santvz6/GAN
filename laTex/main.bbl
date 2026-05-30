@@ -1,0 +1,414 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{gulrajani2017}{inproceedings}{}{}
+      \name{author}{5}{}{%
+        {{hash=94f7047ed067ed3ca0ce018501dd9db9}{%
+           family={Gulrajani},
+           familyi={G\bibinitperiod},
+           given={Ishaan},
+           giveni={I\bibinitperiod}}}%
+        {{hash=4331998881d9f017f2073a11f3ee1b2a}{%
+           family={Ahmed},
+           familyi={A\bibinitperiod},
+           given={Faruk},
+           giveni={F\bibinitperiod}}}%
+        {{hash=ab4a5e058dea2d852ff02aa4e10045c3}{%
+           family={Arjovsky},
+           familyi={A\bibinitperiod},
+           given={Martin},
+           giveni={M\bibinitperiod}}}%
+        {{hash=1328d3ceef6add8461994fc364c664df}{%
+           family={Dumoulin},
+           familyi={D\bibinitperiod},
+           given={Vincent},
+           giveni={V\bibinitperiod}}}%
+        {{hash=ccec1ccd2e1aa86960eb2e872c6b7020}{%
+           family={Courville},
+           familyi={C\bibinitperiod},
+           given={Aaron},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{23de20020d4d8ae2293e93e7427fec95}
+      \strng{fullhash}{7c704ab7af7cef359d9f78a9e5ba6d21}
+      \strng{fullhashraw}{7c704ab7af7cef359d9f78a9e5ba6d21}
+      \strng{bibnamehash}{23de20020d4d8ae2293e93e7427fec95}
+      \strng{authorbibnamehash}{23de20020d4d8ae2293e93e7427fec95}
+      \strng{authornamehash}{23de20020d4d8ae2293e93e7427fec95}
+      \strng{authorfullhash}{7c704ab7af7cef359d9f78a9e5ba6d21}
+      \strng{authorfullhashraw}{7c704ab7af7cef359d9f78a9e5ba6d21}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Advances in Neural Information Processing Systems (NIPS)}
+      \field{title}{Improved Training of {Wasserstein} {GANs}}
+      \field{volume}{30}
+      \field{year}{2017}
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1704.00028
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1704.00028
+      \endverb
+    \endentry
+    \entry{goodfellow2014}{inproceedings}{}{}
+      \name{author}{8}{}{%
+        {{hash=d4f74ef4c79f3bb1e51e378184d8850e}{%
+           family={Goodfellow},
+           familyi={G\bibinitperiod},
+           given={Ian\bibnamedelima J.},
+           giveni={I\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=a341d25f80a8118cdbb90b272adc8b4f}{%
+           family={Pouget-Abadie},
+           familyi={P\bibinithyphendelim A\bibinitperiod},
+           given={Jean},
+           giveni={J\bibinitperiod}}}%
+        {{hash=9e80f4779b032f68a6106e1424345450}{%
+           family={Mirza},
+           familyi={M\bibinitperiod},
+           given={Mehdi},
+           giveni={M\bibinitperiod}}}%
+        {{hash=743dd6cdaa6639320289d219d351d7b7}{%
+           family={Xu},
+           familyi={X\bibinitperiod},
+           given={Bing},
+           giveni={B\bibinitperiod}}}%
+        {{hash=e8151f1b8f85a048cacb34f374ec922b}{%
+           family={Warde-Farley},
+           familyi={W\bibinithyphendelim F\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+        {{hash=9ca00ffd7cc35f7cfb8f698aa9239c76}{%
+           family={Ozair},
+           familyi={O\bibinitperiod},
+           given={Sherjil},
+           giveni={S\bibinitperiod}}}%
+        {{hash=ccec1ccd2e1aa86960eb2e872c6b7020}{%
+           family={Courville},
+           familyi={C\bibinitperiod},
+           given={Aaron},
+           giveni={A\bibinitperiod}}}%
+        {{hash=40a8e4774982146adc2688546f54efb2}{%
+           family={Bengio},
+           familyi={B\bibinitperiod},
+           given={Yoshua},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{8b5c7065f4df4f81627df9460343f166}
+      \strng{fullhash}{5afe3eb3246d0b46f32cdc5ff3e9d6b8}
+      \strng{fullhashraw}{5afe3eb3246d0b46f32cdc5ff3e9d6b8}
+      \strng{bibnamehash}{8b5c7065f4df4f81627df9460343f166}
+      \strng{authorbibnamehash}{8b5c7065f4df4f81627df9460343f166}
+      \strng{authornamehash}{8b5c7065f4df4f81627df9460343f166}
+      \strng{authorfullhash}{5afe3eb3246d0b46f32cdc5ff3e9d6b8}
+      \strng{authorfullhashraw}{5afe3eb3246d0b46f32cdc5ff3e9d6b8}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Advances in Neural Information Processing Systems (NIPS)}
+      \field{title}{Generative Adversarial Nets}
+      \field{volume}{27}
+      \field{year}{2014}
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1406.2661
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1406.2661
+      \endverb
+    \endentry
+    \entry{radford2015}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=a812c46caad94fc8701be37871f303ba}{%
+           family={Radford},
+           familyi={R\bibinitperiod},
+           given={Alec},
+           giveni={A\bibinitperiod}}}%
+        {{hash=1a5dc3b488533e7e2dff1b6b8568678d}{%
+           family={Metz},
+           familyi={M\bibinitperiod},
+           given={Luke},
+           giveni={L\bibinitperiod}}}%
+        {{hash=8ef51a0906e47d2b4472c4e714ed598f}{%
+           family={Chintala},
+           familyi={C\bibinitperiod},
+           given={Soumith},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{fullhash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{fullhashraw}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{bibnamehash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{authorbibnamehash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{authornamehash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{authorfullhash}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \strng{authorfullhashraw}{80f91da3a2dc6ab908d1fe31a56ad88c}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:1511.06434}
+      \field{title}{Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks}
+      \field{year}{2015}
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1511.06434
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1511.06434
+      \endverb
+    \endentry
+    \entry{mirza2014}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=9e80f4779b032f68a6106e1424345450}{%
+           family={Mirza},
+           familyi={M\bibinitperiod},
+           given={Mehdi},
+           giveni={M\bibinitperiod}}}%
+        {{hash=643f92e8f89f2746a4c1aa077d225755}{%
+           family={Osindero},
+           familyi={O\bibinitperiod},
+           given={Simon},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{f2f89b77d71eb2194d6d6c61ad603e9c}
+      \strng{fullhash}{f2f89b77d71eb2194d6d6c61ad603e9c}
+      \strng{fullhashraw}{f2f89b77d71eb2194d6d6c61ad603e9c}
+      \strng{bibnamehash}{f2f89b77d71eb2194d6d6c61ad603e9c}
+      \strng{authorbibnamehash}{f2f89b77d71eb2194d6d6c61ad603e9c}
+      \strng{authornamehash}{f2f89b77d71eb2194d6d6c61ad603e9c}
+      \strng{authorfullhash}{f2f89b77d71eb2194d6d6c61ad603e9c}
+      \strng{authorfullhashraw}{f2f89b77d71eb2194d6d6c61ad603e9c}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:1411.1784}
+      \field{title}{Conditional Generative Adversarial Nets}
+      \field{year}{2014}
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1411.1784
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1411.1784
+      \endverb
+    \endentry
+    \entry{loper2015}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=26143f0e649e76972c3d235e17a85988}{%
+           family={Loper},
+           familyi={L\bibinitperiod},
+           given={Matthew},
+           giveni={M\bibinitperiod}}}%
+        {{hash=2f5f7c5049dc118abe7fc03f70e822d0}{%
+           family={Mahmood},
+           familyi={M\bibinitperiod},
+           given={Naureen},
+           giveni={N\bibinitperiod}}}%
+        {{hash=586007140096e6d78832f56de1edf859}{%
+           family={Romero},
+           familyi={R\bibinitperiod},
+           given={Javier},
+           giveni={J\bibinitperiod}}}%
+        {{hash=ad16f6eab34f1f33393889dcaac427d6}{%
+           family={Pons-Moll},
+           familyi={P\bibinithyphendelim M\bibinitperiod},
+           given={Gerard},
+           giveni={G\bibinitperiod}}}%
+        {{hash=54960bfd1d66de256b111681241131bb}{%
+           family={Black},
+           familyi={B\bibinitperiod},
+           given={Michael\bibnamedelima J.},
+           giveni={M\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \strng{namehash}{054fc18b0dcfa2ecc2d588914350aacd}
+      \strng{fullhash}{7439f4794dd5b0f8a3e961d9df1b99e0}
+      \strng{fullhashraw}{7439f4794dd5b0f8a3e961d9df1b99e0}
+      \strng{bibnamehash}{054fc18b0dcfa2ecc2d588914350aacd}
+      \strng{authorbibnamehash}{054fc18b0dcfa2ecc2d588914350aacd}
+      \strng{authornamehash}{054fc18b0dcfa2ecc2d588914350aacd}
+      \strng{authorfullhash}{7439f4794dd5b0f8a3e961d9df1b99e0}
+      \strng{authorfullhashraw}{7439f4794dd5b0f8a3e961d9df1b99e0}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{ACM Transactions on Graphics (Proc.\ SIGGRAPH Asia)}
+      \field{number}{6}
+      \field{title}{{SMPL}: A Skinned Multi-Person Linear Model}
+      \field{volume}{34}
+      \field{year}{2015}
+      \field{pages}{248:1\bibrangedash 248:16}
+      \range{pages}{-1}
+    \endentry
+    \entry{huang2020}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=7ff1d21e3184f525b582b31f2ce6651b}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Xin},
+           giveni={X\bibinitperiod}}}%
+        {{hash=96cd3c2df0c5d43b0287c81bfae44cdc}{%
+           family={Khetan},
+           familyi={K\bibinitperiod},
+           given={Ashish},
+           giveni={A\bibinitperiod}}}%
+        {{hash=e4c7f51ec3e51eb269cd7c86f0c0a0c5}{%
+           family={Cvitkovic},
+           familyi={C\bibinitperiod},
+           given={Milan},
+           giveni={M\bibinitperiod}}}%
+        {{hash=443b54729b2dda4b0c4fe4f407083de7}{%
+           family={Karnin},
+           familyi={K\bibinitperiod},
+           given={Zohar},
+           giveni={Z\bibinitperiod}}}%
+      }
+      \strng{namehash}{64856cd821f2d5fe67a4f6173e536fbe}
+      \strng{fullhash}{1689f87f99710b6365af75d38751ae72}
+      \strng{fullhashraw}{1689f87f99710b6365af75d38751ae72}
+      \strng{bibnamehash}{64856cd821f2d5fe67a4f6173e536fbe}
+      \strng{authorbibnamehash}{64856cd821f2d5fe67a4f6173e536fbe}
+      \strng{authornamehash}{64856cd821f2d5fe67a4f6173e536fbe}
+      \strng{authorfullhash}{1689f87f99710b6365af75d38751ae72}
+      \strng{authorfullhashraw}{1689f87f99710b6365af75d38751ae72}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:2012.06678}
+      \field{title}{{TabTransformer}: Tabular Data Modeling Using Contextual Embeddings}
+      \field{year}{2020}
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/2012.06678
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/2012.06678
+      \endverb
+    \endentry
+    \entry{qi2017}{inproceedings}{}{}
+      \name{author}{4}{}{%
+        {{hash=b2724d6a5941431eaac5fc5257fb5ffb}{%
+           family={Qi},
+           familyi={Q\bibinitperiod},
+           given={Charles\bibnamedelima R.},
+           giveni={C\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+        {{hash=18c26ddba8b9dd77f278213fd4e93ce4}{%
+           family={Su},
+           familyi={S\bibinitperiod},
+           given={Hao},
+           giveni={H\bibinitperiod}}}%
+        {{hash=ce269ba9b32a7c6dcce7eab2ff5efb52}{%
+           family={Mo},
+           familyi={M\bibinitperiod},
+           given={Kaichun},
+           giveni={K\bibinitperiod}}}%
+        {{hash=03578abbf51650fbfaf563c532898f30}{%
+           family={Guibas},
+           familyi={G\bibinitperiod},
+           given={Leonidas\bibnamedelima J.},
+           giveni={L\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \strng{namehash}{a79790dccdf84fab1d77d87a99d4c31b}
+      \strng{fullhash}{e75740e59eec749c646eb9b3a2d4fc79}
+      \strng{fullhashraw}{e75740e59eec749c646eb9b3a2d4fc79}
+      \strng{bibnamehash}{a79790dccdf84fab1d77d87a99d4c31b}
+      \strng{authorbibnamehash}{a79790dccdf84fab1d77d87a99d4c31b}
+      \strng{authornamehash}{a79790dccdf84fab1d77d87a99d4c31b}
+      \strng{authorfullhash}{e75740e59eec749c646eb9b3a2d4fc79}
+      \strng{authorfullhashraw}{e75740e59eec749c646eb9b3a2d4fc79}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}
+      \field{title}{{PointNet}: Deep Learning on Point Sets for {3D} Classification and Segmentation}
+      \field{year}{2017}
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1612.00593
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1612.00593
+      \endverb
+    \endentry
+    \entry{wang2019}{article}{}{}
+      \name{author}{6}{}{%
+        {{hash=471e61c37bc3e62dbe8655e02a002343}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Yue},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=3694340d9f42061adb5592bf206b1131}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Yongbin},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=15a5322a1b261fe95ac6e04758acf39c}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Ziwei},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=2f08d093d5937c4e389b5d410145c19b}{%
+           family={Sarma},
+           familyi={S\bibinitperiod},
+           given={Sanjay\bibnamedelima E.},
+           giveni={S\bibinitperiod\bibinitdelim E\bibinitperiod}}}%
+        {{hash=a0c6e9e0629d03c0bfec15575c55c598}{%
+           family={Bronstein},
+           familyi={B\bibinitperiod},
+           given={Michael\bibnamedelima M.},
+           giveni={M\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=a253c085105b123c9827fe9ac40ec566}{%
+           family={Solomon},
+           familyi={S\bibinitperiod},
+           given={Justin\bibnamedelima M.},
+           giveni={J\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+      }
+      \strng{namehash}{5e98f127dac08c7d135b96f89a0a0ce3}
+      \strng{fullhash}{44b80e7c753ed18a5aa9c2fa47f21390}
+      \strng{fullhashraw}{44b80e7c753ed18a5aa9c2fa47f21390}
+      \strng{bibnamehash}{5e98f127dac08c7d135b96f89a0a0ce3}
+      \strng{authorbibnamehash}{5e98f127dac08c7d135b96f89a0a0ce3}
+      \strng{authornamehash}{5e98f127dac08c7d135b96f89a0a0ce3}
+      \strng{authorfullhash}{44b80e7c753ed18a5aa9c2fa47f21390}
+      \strng{authorfullhashraw}{44b80e7c753ed18a5aa9c2fa47f21390}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{ACM Transactions on Graphics}
+      \field{number}{5}
+      \field{title}{Dynamic Graph {CNN} for Learning on Point Clouds}
+      \field{volume}{38}
+      \field{year}{2019}
+      \field{pages}{146:1\bibrangedash 146:12}
+      \range{pages}{-1}
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1801.07829
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1801.07829
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
